@@ -1,0 +1,23 @@
+# Build files
+build/
+*.o
+*.obj
+*.exe
+
+# Qt files
+*.pro.user
+*.pro.user.*
+*.qmake.stash
+
+# Visual Studio files
+.vs/
+*.VC.db
+*.VC.opendb
+*.suo
+*.user
+*.ipch
+
+# Backup & temp
+*.log
+*.tmp
+*.bak
