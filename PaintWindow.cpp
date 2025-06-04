@@ -70,7 +70,7 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 
 PaintWindow::PaintWindow(QWidget* parent) : QMainWindow(parent)
 {
-    setWindowTitle("Level 2: Qt Paint Application");
+    setWindowTitle("ProLancer: v0.1.1");
     setMinimumSize(900, 700);
 
     QWidget* centralWidget = new QWidget(this);
