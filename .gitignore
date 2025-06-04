@@ -1,23 +1,36 @@
-# Build files
+# Build folders
 build/
-*.o
+x64/
 *.obj
+*.o
 *.exe
+*.dll
 
-# Qt files
-*.pro.user
-*.pro.user.*
-*.qmake.stash
-
-# Visual Studio files
+# Qt Creator and Visual Studio files
 .vs/
+*.user
+*.user.*
+*.suo
 *.VC.db
 *.VC.opendb
-*.suo
-*.user
-*.ipch
+*.ncb
+*.aps
 
-# Backup & temp
+# Qt auto-generated
+Makefile*
+*.autosave
+*.pro.user
+*.qmake.stash
+*.moc
+*.qmlc
+*.qrc.depends
+
+# Temp + Logs
 *.log
 *.tmp
 *.bak
+
+# Ignore debug folders specifically
+Debug/
+Release/
+
