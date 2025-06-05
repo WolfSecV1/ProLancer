@@ -1,36 +1,65 @@
-# Build folders
-build/
-x64/
-*.obj
-*.o
-*.exe
-*.dll
+# === Build artifacts ===
+/build/
+/out/
+/bin/
+/lib/
+/CMakeFiles/
+/CMakeCache.txt
+cmake_install.cmake
+Makefile
 
-# Qt Creator and Visual Studio files
-.vs/
-*.user
-*.user.*
+# === Visual Studio ===
+*.vcxproj*
+*.sln
 *.suo
+*.user
+*.userosscache
 *.VC.db
 *.VC.opendb
-*.ncb
-*.aps
+*.opensdf
+*.sdf
+*.cache
+*.pdb
 
-# Qt auto-generated
-Makefile*
+# === Qt Creator ===
 *.autosave
-*.pro.user
-*.qmake.stash
+*.pro.user*
+*.qbs.user*
+*.qmlproject.user*
 *.moc
-*.qmlc
-*.qrc.depends
+*.obj
+*.o
+*.a
+*.lo
+*.la
+*.so
+*.dll
+*.dylib
+*.exe
 
-# Temp + Logs
+# === Qt build-generated ===
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+
+# === Logs and temporary files ===
 *.log
 *.tmp
 *.bak
+*.swp
+*.~*
 
-# Ignore debug folders specifically
-Debug/
-Release/
+# === VS Code ===
+.vscode/
+*.code-workspace
 
+# === System Files ===
+.DS_Store
+Thumbs.db
+
+# === Local Qt install paths (optional, depending on setup) ===
+/Qt*/   # Only if you're not sharing Qt binaries
+
+# === Ignore the .vs folder (Visual Studio project state) ===
+.vs/

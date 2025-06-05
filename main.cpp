@@ -1,12 +1,12 @@
 // main.cpp
 #include <QApplication>
-#include "PaintWindow.h"
+#include "MainWindow.h"
 
 int main(int argc, char* argv[])
 {
     QApplication app(argc, argv);
 
-    PaintWindow window;
+    MainWindow window;
     window.show();
 
     return app.exec();
