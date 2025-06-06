@@ -6,6 +6,7 @@
 #include <QColorDialog>
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 
 // Canvas implementation TODO: Convert all of this to QOpenGLWindow
@@ -272,6 +273,13 @@ void Canvas::renderVertexBuffer()
     vBuffer.release();
 }
 
+void Canvas::rebuildVertexBuffer() {
+    vertices.clear();
+    for (const QVector<StrokePoint>& stroke : strokeList) {
+        addStrokeToVertexBuffer(stroke);
+    }
+}
+
 void Canvas::convertToOpenGLCoords(const QPointF& qtPoint, float& x, float& y) {
     x = static_cast<float>(qtPoint.x());
     y = static_cast<float>(qtPoint.y());
@@ -292,6 +300,24 @@ void Canvas::clearCanvas() {
     update();
 }
 
+void Canvas::undo() {  
+    if (currentStroke.isEmpty() && !strokeList.isEmpty()) {  
+
+        strokeList.pop_back();
+        
+        vertices.clear();
+        strokeVertexCounts.clear();
+
+        for (const QVector<StrokePoint>& stroke : strokeList) {
+            addStrokeToVertexBuffer(stroke); // This appends to vertices and strokeVertexCounts
+        }
+
+        updateVertexBuffer();
+
+        update();  
+    }  
+}
+
 void Canvas::setColor(const QColor& color) {
     currentColor = color;
 }
@@ -310,7 +336,7 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 
         StrokePoint point;
         point.pos = event->pos();
-        point.pressure = 0.7f;  // Start with higher pressure
+        point.pressure = 0.2f;  // Start with higher pressure
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
         point.strokeTime = QTime::currentTime();
 
@@ -332,7 +358,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
             float dy = newPos.y() - lastPos.y();
             float distance = std::sqrt(dx * dx + dy * dy);
 
-            if (distance < 2.0f) return; // Skip if movement is too small
+            if (distance < 1.5f) return; // Skip if movement is too small
         }
 
         StrokePoint point;
@@ -345,10 +371,10 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
             qint64 timeDelta = lastPoint.strokeTime.msecsTo(point.strokeTime);
             point.pressure = calculatePressure(point.pos, lastPoint.pos, timeDelta);
             // Smooth pressure changes
-            point.pressure = lastPoint.pressure * 0.7f + point.pressure * 0.3f;
+            point.pressure = lastPoint.pressure * 0.25f + point.pressure * 0.75f;
         }
         else {
-            point.pressure = 0.7f;
+            point.pressure = 0.25f;
         }
 
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
@@ -362,13 +388,11 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton && drawing) {
         drawing = false;
-
         if (currentStroke.size() > 1) {
             addStrokeToVertexBuffer(currentStroke);
             updateVertexBuffer();
             strokeList.append(currentStroke);
         }
-
         currentStroke.clear();
         update();
     }

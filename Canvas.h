@@ -54,12 +54,14 @@ private:
     void addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke);
     void updateVertexBuffer();
     void renderVertexBuffer();
+    void rebuildVertexBuffer();
     void renderCurrentStroke();
 
 public:  
     Canvas(QWidget* parent = nullptr); // Canvas class  
     ~Canvas();
     void clearCanvas(); // Clear Canvas  
+    void undo();
     void setColor(const QColor& color); // Sets pen color 
     void setBrushOptions(float min, float max, float s);
 

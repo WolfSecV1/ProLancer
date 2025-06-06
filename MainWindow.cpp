@@ -9,7 +9,7 @@
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
-    setWindowTitle("ProLancer: v0.3.0");
+    setWindowTitle("ProLancer: v0.3.1");
     setMinimumSize(600, 600);
 
     QWidget* centralWidget = new QWidget(this);
@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 
     QPushButton* clearButton = new QPushButton("Clear Canvas");
     QPushButton* colorButton = new QPushButton("Choose Color");
+    QPushButton* undoButton = new QPushButton("Undo");
 
     QWidget* colorPanel = new QWidget(nullptr, Qt::Popup);  // Not a child of layout
     QGridLayout* cLayout = new QGridLayout(colorPanel);
@@ -55,6 +56,7 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 
     toolLayout->addWidget(clearButton);
     toolLayout->addWidget(colorButton);
+    toolLayout->addWidget(undoButton);
     toolLayout->addStretch(); // Push buttons to left
 
     // Create canvas
@@ -79,4 +81,9 @@ MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
             colorPanel->setVisible(true);
         std::cout << "Color button clicked!" << std::endl;
         });
-}
+
+    connect(undoButton, &QPushButton::clicked, [this]() {
+        canvas->undo();
+        });
+}   
+        
