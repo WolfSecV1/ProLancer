@@ -36,6 +36,7 @@ Makefile
 *.dll
 *.dylib
 *.exe
+*.qm
 
 # === Qt build-generated ===
 *.moc
