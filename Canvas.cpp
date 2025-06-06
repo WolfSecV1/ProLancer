@@ -110,6 +110,7 @@ void Canvas::renderCurrentStroke() {
             float cx, cy;
             convertToOpenGLCoords(currentPos, cx, cy);
 
+
             Vertex v1 = { cx + perpX, cy + perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
             Vertex v2 = { cx - perpX, cy - perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
 
@@ -229,9 +230,9 @@ void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 
             float cx, cy;
             convertToOpenGLCoords(currentPos, cx, cy);
-
-            Vertex v1 = { cx + perpX, cy + perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
-            Vertex v2 = { cx - perpX, cy - perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
+            
+            Vertex v1 = { cx + perpX, cy + perpY, p1.r, p1.g, p1.b, thick };
+            Vertex v2 = { cx - perpX, cy - perpY, p2.r, p2.g, p2.b, thick };
 
             vertices.append(v1);
             vertices.append(v2);
@@ -368,8 +369,10 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
         StrokePoint point;
         point.pos = newPos;
         point.strokeTime = QTime::currentTime();
+        point.r = currentColor.redF();
+        point.g = currentColor.greenF();
+        point.b = currentColor.blueF();
 
-        // Simpler pressure calculation - less sensitive
         if (!currentStroke.isEmpty()) {
             const StrokePoint& lastPoint = currentStroke.last();
             qint64 timeDelta = lastPoint.strokeTime.msecsTo(point.strokeTime);

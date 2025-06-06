@@ -9,7 +9,7 @@
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
-    setWindowTitle("ProLancer: v0.3.1");
+    setWindowTitle("ProLancer: v0.3.1b");
     setMinimumSize(600, 600);
 
     QWidget* centralWidget = new QWidget(this);

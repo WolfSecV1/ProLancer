@@ -17,6 +17,7 @@ struct StrokePoint {
     float pressure;  // 0.0-1.0 pressure of pen input
     float thickness;  // thickness based on pressure and speed
     QTime strokeTime; // time when point was captured, calculate speed
+    float r, g, b; //color
 };  
 
 struct Vertex {
