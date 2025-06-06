@@ -48,7 +48,7 @@ void Canvas::initializeGL()
     std::cout << "OpenGL Online" << std::endl;
 }
 
-void Canvas::paintGL() 
+void Canvas::paintGL()
 {
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT);
@@ -60,62 +60,68 @@ void Canvas::paintGL()
     }
 
     // Render all strokes from buffer
-    renderVertexBuffer();
+    if (!vertices.isEmpty()) {
+        renderVertexBuffer();
+    }
 
-    // For now, all points are drawn as connected points
-    if (!currentStroke.isEmpty()) { // Dont render anything until user starts drawing
-        
-        glBegin(GL_QUADS); // We will define a bunch of 4-point rectangles to simulate small segment of the brush stroke
+    // Render current stroke being drawn (immediate mode)
+    if (!currentStroke.isEmpty() && currentStroke.size() > 1) {
+        renderCurrentStroke();
+    }
+}
+void Canvas::renderCurrentStroke() {
+    QVector<Vertex> tempVertices;
 
-        for (int i = 0; i < currentStroke.size() - 1; ++i) { // Loop through each pair of consecutive stroke points
+    for (int i = 0; i < currentStroke.size() - 1; ++i) {
+        const StrokePoint& p1 = currentStroke[i];
+        const StrokePoint& p2 = currentStroke[i + 1];
 
-            //init both points
-            const StrokePoint& p1 = currentStroke[i];
-            const StrokePoint& p2 = currentStroke[i + 1];
+        // Simple line segment without over-interpolation
+        QVector<QPointF> points;
+        points.append(p1.pos);
+        points.append(p2.pos);
 
-            //smooth out points by interpolating them
-            QVector<QPointF> interpolated = interpolatePoints(p1.pos, p2.pos); //interpolate the stroke
+        for (int j = 0; j < points.size() - 1; ++j) {
+            QPointF currentPos = points[j];
+            QPointF nextPos = points[j + 1];
 
-            for (int j = 0; j < interpolated.size() - 1; ++j) { //loop through interpolated points in pairs
-                
-                float x1, y1, x2, y2; //initialize points
+            // Calculate direction
+            float dx = nextPos.x() - currentPos.x();
+            float dy = nextPos.y() - currentPos.y();
+            float len = std::sqrt(dx * dx + dy * dy);
 
-                convertToOpenGLCoords(interpolated[j], x1, y1); //convert point 1 to OpenGL coords
-                convertToOpenGLCoords(interpolated[j + 1], x2, y2); //convert point 2 to OpenGL coords
+            if (len < 0.1f) continue; // Skip very short segments
 
-                //interpolate brush thickness
-                float t = static_cast<float>(j) / (interpolated.size() - 1);
-                float thick = p1.thickness * (1.0f - t) + p2.thickness * t;
+            dx /= len;
+            dy /= len;
 
-                // Find Vector direction
-                float dx = x2 - x1;
-                float dy = y2 - y1;
+            // Use smaller thickness for smoother appearance
+            float thick = std::min(p1.thickness, 3.0f) * 0.5f; // Reduce thickness
 
-                // Normalize
-                float len = std::sqrt(dx * dx + dy * dy);
-                if (len > 0) {
-                    dx /= len;
-                    dy /= len;
-                }
+            // Perpendicular offset
+            float perpX = -dy * thick;
+            float perpY = dx * thick;
 
-                // Perpendicular offset
-                float perpX = -dy * thick * 0.5f;
-                float perpY = dx * thick * 0.5f;
+            float cx, cy;
+            convertToOpenGLCoords(currentPos, cx, cy);
 
-                //set color with transparency
-                glColor4f(currentColor.redF(), currentColor.greenF(), currentColor.blueF(), 0.8f);
+            Vertex v1 = { cx + perpX, cy + perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
+            Vertex v2 = { cx - perpX, cy - perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
 
-                //draw rect
-                glVertex2f(x1 + perpX, y1 + perpY);
-                glVertex2f(x1 - perpX, y1 - perpY);
-                glVertex2f(x2 - perpX, y2 - perpY);
-                glVertex2f(x2 + perpX, y2 + perpY);
-            }
+            tempVertices.append(v1);
+            tempVertices.append(v2);
+        }
+    }
+
+    // Render current stroke
+    if (!tempVertices.isEmpty()) {
+        glBegin(GL_TRIANGLE_STRIP);
+        for (const Vertex& v : tempVertices) {
+            glColor4f(v.r, v.g, v.b, 0.8f);
+            glVertex2f(v.x, v.y);
         }
         glEnd();
     }
-
-    std::cout << "Paint GL - " << strokeList.size() << " strokes, current: " << currentStroke.size() << " points" << std::endl;
 }
 
 void Canvas::resizeGL(int width, int height) {
@@ -149,6 +155,8 @@ QVector<QPointF> Canvas::interpolatePoints(const QPointF& p1, const QPointF& p2,
     return result; //Return the stroke
 }
 
+
+
 float Canvas::calculatePressure(const QPointF& posF, const QPointF& posI, qint64 deltaT) {  
     if (deltaT <= 0) {  
         return 0.5f;  
@@ -165,86 +173,102 @@ float Canvas::calculatePressure(const QPointF& posF, const QPointF& posI, qint64
     return pressure;
 }
 
+// Fixed addStrokeToVertexBuffer
 void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 {
+    if (stroke.size() < 2) return;
+
+    int startVertexCount = vertices.size();
+
     for (int i = 0; i < stroke.size() - 1; ++i) {
-        const StrokePoint& p1 = currentStroke[i];
-        const StrokePoint& p2 = currentStroke[i + 1];
+        const StrokePoint& p1 = stroke[i];
+        const StrokePoint& p2 = stroke[i + 1];
 
-        //smooth out points by interpolating them
-        QVector<QPointF> interpolated = interpolatePoints(p1.pos, p2.pos); //interpolate the stroke
+        // Reduce interpolation - only interpolate if points are far apart
+        float dx = p2.pos.x() - p1.pos.x();
+        float dy = p2.pos.y() - p1.pos.y();
+        float distance = std::sqrt(dx * dx + dy * dy);
 
-        for (int j = 0; j < interpolated.size() - 1; ++j) { //loop through interpolated points in pairs
+        QVector<QPointF> points;
+        if (distance > 5.0f) {
+            // Only interpolate if points are far apart
+            points = interpolatePoints(p1.pos, p2.pos, 1); // Reduce interpolation
+        }
+        else {
+            points.append(p1.pos);
+            points.append(p2.pos);
+        }
 
-            float x1, y1, x2, y2; //initialize points
+        for (int j = 0; j < points.size() - 1; ++j) {
+            QPointF currentPos = points[j];
+            QPointF nextPos = points[j + 1];
 
-            convertToOpenGLCoords(interpolated[j], x1, y1); //convert point 1 to OpenGL coords
-            convertToOpenGLCoords(interpolated[j + 1], x2, y2); //convert point 2 to OpenGL coords
+            // Calculate direction
+            float dirX = nextPos.x() - currentPos.x();
+            float dirY = nextPos.y() - currentPos.y();
+            float len = std::sqrt(dirX * dirX + dirY * dirY);
 
-            //interpolate brush thickness
-            float t = static_cast<float>(j) / (interpolated.size() - 1);
+            if (len < 0.1f) continue;
+
+            dirX /= len;
+            dirY /= len;
+
+            // Interpolate thickness
+            float t = static_cast<float>(j) / (points.size() - 1);
             float thick = p1.thickness * (1.0f - t) + p2.thickness * t;
-
-            // Find Vector direction
-            float dx = x2 - x1;
-            float dy = y2 - y1;
-
-            // Normalize
-            float len = std::sqrt(dx * dx + dy * dy);
-            if (len > 0) {
-                dx /= len;
-                dy /= len;
-            }
+            thick = std::min(thick, 4.0f) * 0.5f; // Limit and reduce thickness
 
             // Perpendicular offset
-            float pX = -dy * thick * 0.5f;
-            float pY = dx * thick * 0.5f;
+            float perpX = -dirY * thick;
+            float perpY = dirX * thick;
 
-            // 
-            Vertex v1 = { x1 + pX, y1 + pY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
-            Vertex v2 = { x1 - pX, y1 - pY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
-            Vertex v3 = { x2 - pX, y2 - pY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
-            Vertex v4 = { x2 + pX, y2 + pY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
+            float cx, cy;
+            convertToOpenGLCoords(currentPos, cx, cy);
+
+            Vertex v1 = { cx + perpX, cy + perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
+            Vertex v2 = { cx - perpX, cy - perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
 
             vertices.append(v1);
             vertices.append(v2);
-            vertices.append(v3);
-            vertices.append(v4);
         }
     }
+
+    int newVertexCount = vertices.size() - startVertexCount;
+    strokeVertexCounts.append(newVertexCount);
 }
 
 void Canvas::updateVertexBuffer() {
-    if (vertices.isEmpty()) return;
-    vBuffer.bind();
-    vBuffer.allocate(vertices.data(), vertices.size() * sizeof(Vertex));
+    if (!vBuffer.bind()) return;
+    if (vertices.isEmpty()) {
+        vBuffer.allocate(nullptr, 0);
+    }
+    else {
+        vBuffer.allocate(vertices.data(), vertices.size() * sizeof(Vertex));
+    }
     vBuffer.release();
-    std::cout << "VBO updated with " << vertices.size() << " vertices" << std::endl;
 }
 
 void Canvas::renderVertexBuffer()
 {
-    if (vertices.isEmpty()) return;
+    if (vertices.isEmpty() || !vBuffer.bind()) return;
 
-    if (!vBuffer.bind()) return;
-
-    // Enable vertex arrays
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
 
-    // Set vertex and color pointers
     glVertexPointer(2, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(0));
     glColorPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(2 * sizeof(float)));
 
-    // Draw all quads
-    for (int i = 0; i < vertices.size(); i += 4) {
-        glDrawArrays(GL_QUADS, i, 4);
+    // Draw each stroke separately
+    int startVertex = 0;
+    for (int count : strokeVertexCounts) {
+        if (count > 0) {
+            glDrawArrays(GL_TRIANGLE_STRIP, startVertex, count);
+            startVertex += count;
+        }
     }
 
-    // Disable vertex arrays
     glDisableClientState(GL_COLOR_ARRAY);
     glDisableClientState(GL_VERTEX_ARRAY);
-
     vBuffer.release();
 }
 
@@ -257,7 +281,14 @@ void Canvas::clearCanvas() {
     currentStroke.clear();
     strokeList.clear();
     vertices.clear();
-    vboUpdateFlag = true;
+    strokeVertexCounts.clear();
+
+    // Clear the VBO
+    if (vBuffer.bind()) {
+        vBuffer.allocate(nullptr, 0);
+        vBuffer.release();
+    }
+
     update();
 }
 
@@ -279,7 +310,7 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 
         StrokePoint point;
         point.pos = event->pos();
-        point.pressure = 0.5f;  // Starting pressure
+        point.pressure = 0.7f;  // Start with higher pressure
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
         point.strokeTime = QTime::currentTime();
 
@@ -292,18 +323,32 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
     if (drawing && (event->buttons() & Qt::LeftButton)) {
+        QPointF newPos = event->pos();
+
+        // Only add point if it's moved enough (reduces oversensitivity)
+        if (!currentStroke.isEmpty()) {
+            QPointF lastPos = currentStroke.last().pos;
+            float dx = newPos.x() - lastPos.x();
+            float dy = newPos.y() - lastPos.y();
+            float distance = std::sqrt(dx * dx + dy * dy);
+
+            if (distance < 2.0f) return; // Skip if movement is too small
+        }
+
         StrokePoint point;
-        point.pos = event->pos();
+        point.pos = newPos;
         point.strokeTime = QTime::currentTime();
 
-        // Calculate pressure based on speed
+        // Simpler pressure calculation - less sensitive
         if (!currentStroke.isEmpty()) {
             const StrokePoint& lastPoint = currentStroke.last();
             qint64 timeDelta = lastPoint.strokeTime.msecsTo(point.strokeTime);
             point.pressure = calculatePressure(point.pos, lastPoint.pos, timeDelta);
+            // Smooth pressure changes
+            point.pressure = lastPoint.pressure * 0.7f + point.pressure * 0.3f;
         }
         else {
-            point.pressure = 0.5f;
+            point.pressure = 0.7f;
         }
 
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
@@ -312,19 +357,19 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
     }
 }
 
-void Canvas::mouseReleaseEvent(QMouseEvent * event)
+
+void Canvas::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::LeftButton && drawing) {
         drawing = false;
 
-        if (!currentStroke.isEmpty()) {
-            addStrokeToVertexBuffer(currentStroke);  // Convert current stroke to quad vertices
-            updateVertexBuffer();                    // Upload those to GPU
-            if (currentStroke.size() > 1) {
-                strokeList.append(currentStroke);
-            }
-            currentStroke.clear();
-            update();                                // Repaint the canvas
+        if (currentStroke.size() > 1) {
+            addStrokeToVertexBuffer(currentStroke);
+            updateVertexBuffer();
+            strokeList.append(currentStroke);
         }
+
+        currentStroke.clear();
+        update();
     }
 }
