@@ -4,6 +4,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QColorDialog>
+#include <QShortcut>
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -13,6 +14,8 @@
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), drawing(false), vboUpdateFlag(false)
 {
     setMinimumSize(500, 500);
+    QShortcut* u = new QShortcut(QKeySequence::Undo, this);
+    connect(u, &QShortcut::activated, this, &Canvas::undo);
 }
 
 Canvas::~Canvas()
@@ -69,6 +72,7 @@ void Canvas::paintGL()
     if (!currentStroke.isEmpty() && currentStroke.size() > 1) {
         renderCurrentStroke();
     }
+
 }
 void Canvas::renderCurrentStroke() {
     QVector<Vertex> tempVertices;
