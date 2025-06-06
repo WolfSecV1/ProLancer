@@ -26,7 +26,7 @@ A modern, OpenGL-powered collaborative canvas — inspired by Krita but built fo
 
 Here’s what it looks like in action:
 
-> *(drop your video/gif or more screenshots here later)*
+TODO
 
 ---
 
