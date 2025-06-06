@@ -1,14 +1,13 @@
 #pragma comment(lib, "opengl32.lib")
 #include "Canvas.h"
+#include <cmath>
+#include <algorithm>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QColorDialog>
 #include <QShortcut>
 #include <iostream>
-#include <cmath>
-#include <algorithm>
-
 
 // Canvas implementation TODO: Convert all of this to QOpenGLWindow
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), drawing(false), vboUpdateFlag(false)
@@ -16,6 +15,7 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), drawing(false), vboUpda
     setMinimumSize(500, 500);
     QShortcut* u = new QShortcut(QKeySequence::Undo, this);
     connect(u, &QShortcut::activated, this, &Canvas::undo);
+
 }
 
 Canvas::~Canvas()
@@ -101,8 +101,7 @@ void Canvas::renderCurrentStroke() {
             dy /= len;
 
             // Use smaller thickness for smoother appearance
-            float thick = std::min(p1.thickness, 3.0f) * 0.5f; // Reduce thickness
-
+            float thick = std::min<float>(p1.thickness, 3.0f) * 0.5f; // Reduce thickness
             // Perpendicular offset
             float perpX = -dy * thick;
             float perpY = dx * thick;
@@ -222,8 +221,7 @@ void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
             // Interpolate thickness
             float t = static_cast<float>(j) / (points.size() - 1);
             float thick = p1.thickness * (1.0f - t) + p2.thickness * t;
-            thick = std::min(thick, 4.0f) * 0.5f; // Limit and reduce thickness
-
+            thick = std::min<float>(thick, 4.0f) * 0.5f; // Limit and reduce thickness
             // Perpendicular offset
             float perpX = -dirY * thick;
             float perpY = dirX * thick;
@@ -333,14 +331,20 @@ void Canvas::setBrushOptions(float minT, float maxT, float s) {
     speedSensitivity = s;
 }
 
+
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton) {
+    qDebug() << event->button();
+    if (Qt::LeftButton == event->button()) {
+        qDebug() << event->button();
         drawing = true;
         currentStroke.clear();
 
         StrokePoint point;
         point.pos = event->pos();
+        point.r = currentColor.redF();
+        point.g = currentColor.greenF();
+        point.b = currentColor.blueF();
         point.pressure = 0.2f;  // Start with higher pressure
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
         point.strokeTime = QTime::currentTime();
@@ -353,7 +357,7 @@ void Canvas::mousePressEvent(QMouseEvent* event)
 
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
-    if (drawing && (event->buttons() & Qt::LeftButton)) {
+    if (drawing && (Qt::LeftButton & event->buttons())) {
         QPointF newPos = event->pos();
 
         // Only add point if it's moved enough (reduces oversensitivity)
@@ -393,7 +397,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
 
 void Canvas::mouseReleaseEvent(QMouseEvent* event)
 {
-    if (event->button() == Qt::LeftButton && drawing) {
+    if ((Qt::LeftButton == event->button()) && drawing) {
         drawing = false;
         if (currentStroke.size() > 1) {
             addStrokeToVertexBuffer(currentStroke);

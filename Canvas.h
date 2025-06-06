@@ -32,6 +32,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions
 
 private:
     // Initializing required variables
+    Qt::MouseButton primaryButton;
     QVector<StrokePoint> currentStroke;  // Current stroke
     QVector<QVector<StrokePoint>> strokeList; // List of all strokes
     bool drawing; // Flag to see if currently drawing  
