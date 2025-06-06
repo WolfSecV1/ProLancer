@@ -7,7 +7,7 @@
 
 # 🎨 ProLancer
 
-A modern, OpenGL-powered collaborative canvas — inspired by Krita but built for freelancers, real-time tools, and buttery smooth drawing.
+A soon to be modern, OpenGL-powered collaborative canvas — inspired by Krita but built for freelancers, real-time tools, and smooth drawing.
 
 > Built with Qt + QOpenGL, hand-coded geometry, and future-proof vibes.
 
@@ -15,18 +15,11 @@ A modern, OpenGL-powered collaborative canvas — inspired by Krita but built fo
 
 ## 🚀 Features
 
-- ✏️ **Pressure-sensitive strokes** with triangle strip rendering
-- ⚙️ Real OpenGL performance (not just a widget hack)
-- 🎨 Custom brush pipeline (coming soon)
-- 🔄 VBO-backed rendering for stability and speed
-
----
-
-## 📸 Preview
-
-Here’s what it looks like in action:
-
-TODO
+- Pressure simulated strokes with triangle strip rendering
+- Real OpenGL performance
+- Custom brush pipeline
+- VBO-backed rendering for stability and speed
+- Newly implemented undo button
 
 ---
 
