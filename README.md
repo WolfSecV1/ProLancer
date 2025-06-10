@@ -5,11 +5,11 @@
 
 ---
 
-# 🎨 ProLancer
+# 🎨 Lancer
 
-A soon to be modern, OpenGL-powered collaborative canvas — inspired by Krita but built for freelancers, real-time tools, and smooth drawing.
+A soon to be modern, OpenGL-powered canvas — built for freelancers, real-time tools, and smooth drawing.
 
-> Built with Qt + QOpenGL, hand-coded geometry, and future-proof vibes.
+> Built with Qt + QOpenGL, hand-coded geometry, and more features to come.
 
 ---
 
@@ -32,3 +32,6 @@ mkdir build && cd build
 cmake ..
 make
 ./ProLancer
+```
+
+Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build.)

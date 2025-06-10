@@ -1,24 +1,13 @@
 #ifndef CANVAS_H  
 #define CANVAS_H  
 
-#include <QPainter>  
 #include <QMouseEvent>  
-#include <QPaintEvent>  
-#include <QPoint>  
-#include <QVector>  
-#include <QColor>
 #include <QOpenGLBuffer>
-#include <QtOpenGLWidgets/QOpenGLWidget>  
+#include <QOpenGLWidget>  
 #include <QOpenGLFunctions>  
 #include <QTime>
-
-struct StrokePoint {  
-    QPointF pos;  // 2D float point, stores location on canvas, sub-pixel accuracy for smooth strokes
-    float pressure;  // 0.0-1.0 pressure of pen input
-    float thickness;  // thickness based on pressure and speed
-    QTime strokeTime; // time when point was captured, calculate speed
-    float r, g, b; //color
-};  
+#include "../data/StrokePoint.h"
+#include "core/CanvasController.h"
 
 struct Vertex {
     float x, y;         // position
@@ -32,7 +21,7 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions
 
 private:
     // Initializing required variables
-    Qt::MouseButton primaryButton;
+    CanvasController* controller;
     QVector<StrokePoint> currentStroke;  // Current stroke
     QVector<QVector<StrokePoint>> strokeList; // List of all strokes
     bool drawing; // Flag to see if currently drawing  

@@ -1,6 +1,7 @@
 // PaintWindow.cpp
 #include "MainWindow.h"
 #include "Canvas.h"
+#include "fileReader.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>
@@ -9,7 +10,17 @@
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
-    setWindowTitle("ProLancer: v0.3.1b");
+    QString lancerVersion;
+
+    try {
+        lancerVersion = loadFileAsQString("version.txt").trimmed();
+    }
+    catch (const std::exception& e) {
+        lancerVersion = "Unknown Version";
+        qDebug() << "Error loading version:" << e.what();
+    }
+
+    setWindowTitle("Lancer: " + lancerVersion);
     setMinimumSize(600, 600);
 
     QWidget* centralWidget = new QWidget(this);

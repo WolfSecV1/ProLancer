@@ -1,21 +1,45 @@
 cmake_minimum_required(VERSION 3.16)
-project(ProLancer LANGUAGES CXX)
+
+project(Lancer LANGUAGES CXX)
+
+configure_file(assets/version.txt version.txt COPYONLY)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets OpenGL OpenGLWidgets)
+find_package(Qt6 
+    REQUIRED 
+    COMPONENTS 
+    Core 
+    Gui 
+    Widgets 
+    OpenGL 
+    OpenGLWidgets
+)
 
-add_executable(ProLancer
-    main.cpp
-    MainWindow.cpp
-    Canvas.cpp
-    MainWindow.h
-    Canvas.h
+add_executable(Lancer)
+
+target_sources(Lancer PRIVATE
+    src/main.cpp
+    src/MainWindow.cpp
+    src/Canvas.cpp
+    src/core/CanvasController.cpp
+    src/fileReader.cpp
+ "src/core/CanvasController.h" "data/StrokePoint.h")
+
+target_include_directories(Lancer PRIVATE
+    src
+    src/core
+)
+
+target_link_libraries(Lancer 
+    Qt6::Core 
+    Qt6::Gui 
+    Qt6::Widgets 
+    Qt6::OpenGL 
+    Qt6::OpenGLWidgets
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE ON)
-
-target_link_libraries(ProLancer Qt6::Core Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets)

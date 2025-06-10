@@ -1,17 +1,12 @@
 #pragma comment(lib, "opengl32.lib")
 #include "Canvas.h"
-#include <cmath>
-#include <algorithm>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QPushButton>
-#include <QColorDialog>
 #include <QShortcut>
 #include <iostream>
 
 // Canvas implementation TODO: Convert all of this to QOpenGLWindow
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), drawing(false), vboUpdateFlag(false)
 {
+    controller = new CanvasController();
     setMinimumSize(500, 500);
     QShortcut* u = new QShortcut(QKeySequence::Undo, this);
     connect(u, &QShortcut::activated, this, &Canvas::undo);
@@ -69,17 +64,20 @@ void Canvas::paintGL()
     }
 
     // Render current stroke being drawn (immediate mode)
-    if (!currentStroke.isEmpty() && currentStroke.size() > 1) {
+    const auto& stroke = controller->getCurrentStroke();
+    if (!stroke.isEmpty() && stroke.size() > 1) {
         renderCurrentStroke();
     }
 
 }
 void Canvas::renderCurrentStroke() {
     QVector<Vertex> tempVertices;
+    const auto& stroke = controller->getCurrentStroke();
+    const auto& color = controller->getCurrentColor();
 
-    for (int i = 0; i < currentStroke.size() - 1; ++i) {
-        const StrokePoint& p1 = currentStroke[i];
-        const StrokePoint& p2 = currentStroke[i + 1];
+    for (int i = 0; i < stroke.size() - 1; ++i) {
+        const StrokePoint& p1 = stroke[i];
+        const StrokePoint& p2 = stroke[i + 1];
 
         // Simple line segment without over-interpolation
         QVector<QPointF> points;
@@ -110,8 +108,8 @@ void Canvas::renderCurrentStroke() {
             convertToOpenGLCoords(currentPos, cx, cy);
 
 
-            Vertex v1 = { cx + perpX, cy + perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
-            Vertex v2 = { cx - perpX, cy - perpY, currentColor.redF(), currentColor.greenF(), currentColor.blueF(), thick };
+            Vertex v1 = { cx + perpX, cy + perpY, color.redF(), color.greenF(), color.blueF(), thick };
+            Vertex v2 = { cx - perpX, cy - perpY, color.redF(), color.greenF(), color.blueF(), thick };
 
             tempVertices.append(v1);
             tempVertices.append(v2);
@@ -197,7 +195,7 @@ void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
         QVector<QPointF> points;
         if (distance > 5.0f) {
             // Only interpolate if points are far apart
-            points = interpolatePoints(p1.pos, p2.pos, 1); // Reduce interpolation
+            points = interpolatePoints(p1.pos, p2.pos, 3); // Reduce interpolation
         }
         else {
             points.append(p1.pos);
@@ -289,7 +287,7 @@ void Canvas::convertToOpenGLCoords(const QPointF& qtPoint, float& x, float& y) {
 }
 
 void Canvas::clearCanvas() {
-    currentStroke.clear();
+    controller->clearCurrentStroke();
     strokeList.clear();
     vertices.clear();
     strokeVertexCounts.clear();
@@ -304,7 +302,7 @@ void Canvas::clearCanvas() {
 }
 
 void Canvas::undo() {  
-    if (currentStroke.isEmpty() && !strokeList.isEmpty()) {  
+    if (controller->getCurrentStroke().isEmpty() && !strokeList.isEmpty()) {
 
         strokeList.pop_back();
         
@@ -322,7 +320,7 @@ void Canvas::undo() {
 }
 
 void Canvas::setColor(const QColor& color) {
-    currentColor = color;
+    controller->setCurrentColor(color);
 }
 
 void Canvas::setBrushOptions(float minT, float maxT, float s) {
@@ -331,7 +329,7 @@ void Canvas::setBrushOptions(float minT, float maxT, float s) {
     speedSensitivity = s;
 }
 
-
+/*
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
     qDebug() << event->button();
@@ -354,15 +352,24 @@ void Canvas::mousePressEvent(QMouseEvent* event)
         update();
     }
 }
+*/
+
+void Canvas::mousePressEvent(QMouseEvent* event)
+{
+    controller->handleMousePress(event);
+    timer.restart();
+    update(); // trigger redraw if needed
+}
+
 
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
-    if (drawing && (Qt::LeftButton & event->buttons())) {
+    if (controller->isDrawing() && (Qt::LeftButton & event->buttons())) {
         QPointF newPos = event->pos();
 
         // Only add point if it's moved enough (reduces oversensitivity)
-        if (!currentStroke.isEmpty()) {
-            QPointF lastPos = currentStroke.last().pos;
+        if (!controller->getCurrentStroke().isEmpty()) {
+            QPointF lastPos = controller->getCurrentStroke().last().pos;
             float dx = newPos.x() - lastPos.x();
             float dy = newPos.y() - lastPos.y();
             float distance = std::sqrt(dx * dx + dy * dy);
@@ -370,15 +377,16 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
             if (distance < 1.5f) return; // Skip if movement is too small
         }
 
+        const auto& color = controller->getCurrentColor();
         StrokePoint point;
         point.pos = newPos;
         point.strokeTime = QTime::currentTime();
-        point.r = currentColor.redF();
-        point.g = currentColor.greenF();
-        point.b = currentColor.blueF();
+        point.r = color.redF();
+        point.g = color.greenF();
+        point.b = color.blueF();
 
-        if (!currentStroke.isEmpty()) {
-            const StrokePoint& lastPoint = currentStroke.last();
+        if (!controller->getCurrentStroke().isEmpty()) {
+            const StrokePoint& lastPoint = controller->getCurrentStroke().last();
             qint64 timeDelta = lastPoint.strokeTime.msecsTo(point.strokeTime);
             point.pressure = calculatePressure(point.pos, lastPoint.pos, timeDelta);
             // Smooth pressure changes
@@ -389,7 +397,7 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
         }
 
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
-        currentStroke.append(point);
+        controller->appendToCurrentStroke(point);
         update();
     }
 }
@@ -397,14 +405,14 @@ void Canvas::mouseMoveEvent(QMouseEvent* event)
 
 void Canvas::mouseReleaseEvent(QMouseEvent* event)
 {
-    if ((Qt::LeftButton == event->button()) && drawing) {
-        drawing = false;
-        if (currentStroke.size() > 1) {
-            addStrokeToVertexBuffer(currentStroke);
+    if ((Qt::LeftButton == event->button()) && controller->isDrawing()) {
+        controller->setDrawingToFalse();
+        if (controller->getCurrentStroke().size() > 1) {
+            addStrokeToVertexBuffer(controller->getCurrentStroke());
             updateVertexBuffer();
-            strokeList.append(currentStroke);
+            strokeList.append(controller->getCurrentStroke());
         }
-        currentStroke.clear();
+        controller->clearCurrentStroke();
         update();
     }
 }

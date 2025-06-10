@@ -2,10 +2,10 @@
 setlocal
 
 :: --- CONFIG ---
-set APP_NAME=ProLancer
+set APP_NAME=Lancer
 set BUILD_DIR=out\build\release
 set DEPLOY_DIR=deploy
-set VERSION_FILE=version.txt
+set VERSION_FILE=assets\version.txt
 set QT_BIN=C:\Qt\6.9.1\msvc2022_64\bin
 
 :: --- READ VERSION ---
