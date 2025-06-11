@@ -26,7 +26,7 @@ A soon to be modern, OpenGL-powered canvas — built for freelancers, real-time 
 ## 🧑‍💻 Building It Yourself
 
 ```bash
-git clone https://github.com/yourusername/Lancer.git
+git clone https://github.com/WolfSecV1/Lancer.git
 cd Lancer
 mkdir build && cd build
 cmake ..
