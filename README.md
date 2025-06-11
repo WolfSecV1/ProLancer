@@ -26,12 +26,12 @@ A soon to be modern, OpenGL-powered canvas — built for freelancers, real-time 
 ## 🧑‍💻 Building It Yourself
 
 ```bash
-git clone https://github.com/yourusername/ProLancer.git
-cd ProLancer
+git clone https://github.com/yourusername/Lancer.git
+cd Lancer
 mkdir build && cd build
 cmake ..
 make
-./ProLancer
+./Lancer
 ```
 
 Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build.)
