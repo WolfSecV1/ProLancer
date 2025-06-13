@@ -1,5 +1,7 @@
 #pragma comment(lib, "opengl32.lib")
 #include "Canvas.h"
+#include "core/StrokeProcessor.h"
+#include "core/BrushUtils.h"
 #include <QShortcut>
 #include <iostream>
 
@@ -140,103 +142,12 @@ void Canvas::resizeGL(int width, int height) {
     std::cout << "Resize GL: " << width << "x" << height << std::endl;
 }
 
-QVector<QPointF> Canvas::interpolatePoints(const QPointF& p1, const QPointF& p2, int n_S)
-{
-    QVector<QPointF> result; //Create empty stroke
-    result.append(p1); //start with first point
-    for (int i = 0; i <= n_S; ++i) { //loop for # of segments
-        float t = static_cast<float>(i) / n_S; // t = i/n
-        
-        //Apply LERP formula to our new point
-        QPointF interpolated(
-            p1.x() * (1 - t) + p2.x() * t,
-            p1.y() * (1 - t) + p2.y() * t
-        );
-        result.append(interpolated); //Append it
-    }
-    result.append(p2); // Last but not lease attach the last point
-    return result; //Return the stroke
-}
-
-
-
-float Canvas::calculatePressure(const QPointF& posF, const QPointF& posI, qint64 deltaT) {  
-    if (deltaT <= 0) {  
-        return 0.5f;  
-    }  
-    float dx = posF.x() - posI.x();  
-    float dy = posF.y() - posI.y();  
-    float dist = std::sqrt(dx * dx + dy * dy);  
-    float sec = deltaT / 1000.0f;  
-    float speed = dist / sec;  
-    float maxSpeed = 1000.0f;  
-    float pressure = 1.0f - (speed / maxSpeed) * speedSensitivity;  
-    if (pressure < 0.1f) {pressure = 0.1f;}
-    if (pressure > 1.0f) {pressure = 1.0f;}
-    return pressure;
-}
-
 // Fixed addStrokeToVertexBuffer
 void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 {
-    if (stroke.size() < 2) return;
-
-    int startVertexCount = vertices.size();
-
-    for (int i = 0; i < stroke.size() - 1; ++i) {
-        const StrokePoint& p1 = stroke[i];
-        const StrokePoint& p2 = stroke[i + 1];
-
-        // Reduce interpolation - only interpolate if points are far apart
-        float dx = p2.pos.x() - p1.pos.x();
-        float dy = p2.pos.y() - p1.pos.y();
-        float distance = std::sqrt(dx * dx + dy * dy);
-
-        QVector<QPointF> points;
-        if (distance > 5.0f) {
-            // Only interpolate if points are far apart
-            points = interpolatePoints(p1.pos, p2.pos, 3); // Reduce interpolation
-        }
-        else {
-            points.append(p1.pos);
-            points.append(p2.pos);
-        }
-
-        for (int j = 0; j < points.size() - 1; ++j) {
-            QPointF currentPos = points[j];
-            QPointF nextPos = points[j + 1];
-
-            // Calculate direction
-            float dirX = nextPos.x() - currentPos.x();
-            float dirY = nextPos.y() - currentPos.y();
-            float len = std::sqrt(dirX * dirX + dirY * dirY);
-
-            if (len < 0.1f) continue;
-
-            dirX /= len;
-            dirY /= len;
-
-            // Interpolate thickness
-            float t = static_cast<float>(j) / (points.size() - 1);
-            float thick = p1.thickness * (1.0f - t) + p2.thickness * t;
-            thick = std::min<float>(thick, 4.0f) * 0.5f; // Limit and reduce thickness
-            // Perpendicular offset
-            float perpX = -dirY * thick;
-            float perpY = dirX * thick;
-
-            float cx, cy;
-            convertToOpenGLCoords(currentPos, cx, cy);
-            
-            Vertex v1 = { cx + perpX, cy + perpY, p1.r, p1.g, p1.b, thick };
-            Vertex v2 = { cx - perpX, cy - perpY, p2.r, p2.g, p2.b, thick };
-
-            vertices.append(v1);
-            vertices.append(v2);
-        }
-    }
-
-    int newVertexCount = vertices.size() - startVertexCount;
-    strokeVertexCounts.append(newVertexCount);
+    auto newVertices = controller->getProcessor().generateVertices(stroke);
+    vertices.append(newVertices);
+    strokeVertexCounts.append(newVertices.size());
 }
 
 void Canvas::updateVertexBuffer() {
@@ -281,11 +192,6 @@ void Canvas::rebuildVertexBuffer() {
     }
 }
 
-void Canvas::convertToOpenGLCoords(const QPointF& qtPoint, float& x, float& y) {
-    x = static_cast<float>(qtPoint.x());
-    y = static_cast<float>(qtPoint.y());
-}
-
 void Canvas::clearCanvas() {
     controller->clearCurrentStroke();
     strokeList.clear();
@@ -326,87 +232,26 @@ void Canvas::setColor(const QColor& color) {
 void Canvas::setBrushOptions(float minT, float maxT, float s) {
     minThickness = minT;
     maxThickness = maxT;
-    speedSensitivity = s;
 }
-
-/*
-void Canvas::mousePressEvent(QMouseEvent* event)
-{
-    qDebug() << event->button();
-    if (Qt::LeftButton == event->button()) {
-        qDebug() << event->button();
-        drawing = true;
-        currentStroke.clear();
-
-        StrokePoint point;
-        point.pos = event->pos();
-        point.r = currentColor.redF();
-        point.g = currentColor.greenF();
-        point.b = currentColor.blueF();
-        point.pressure = 0.2f;  // Start with higher pressure
-        point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
-        point.strokeTime = QTime::currentTime();
-
-        currentStroke.append(point);
-        timer.restart();
-        update();
-    }
-}
-*/
 
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
-    controller->handleMousePress(event);
+    controller->onMousePress(event);
     timer.restart();
-    update(); // trigger redraw if needed
+    update();
 }
 
 
 void Canvas::mouseMoveEvent(QMouseEvent* event)
 {
-    if (controller->isDrawing() && (Qt::LeftButton & event->buttons())) {
-        QPointF newPos = event->pos();
-
-        // Only add point if it's moved enough (reduces oversensitivity)
-        if (!controller->getCurrentStroke().isEmpty()) {
-            QPointF lastPos = controller->getCurrentStroke().last().pos;
-            float dx = newPos.x() - lastPos.x();
-            float dy = newPos.y() - lastPos.y();
-            float distance = std::sqrt(dx * dx + dy * dy);
-
-            if (distance < 1.5f) return; // Skip if movement is too small
-        }
-
-        const auto& color = controller->getCurrentColor();
-        StrokePoint point;
-        point.pos = newPos;
-        point.strokeTime = QTime::currentTime();
-        point.r = color.redF();
-        point.g = color.greenF();
-        point.b = color.blueF();
-
-        if (!controller->getCurrentStroke().isEmpty()) {
-            const StrokePoint& lastPoint = controller->getCurrentStroke().last();
-            qint64 timeDelta = lastPoint.strokeTime.msecsTo(point.strokeTime);
-            point.pressure = calculatePressure(point.pos, lastPoint.pos, timeDelta);
-            // Smooth pressure changes
-            point.pressure = lastPoint.pressure * 0.25f + point.pressure * 0.75f;
-        }
-        else {
-            point.pressure = 0.25f;
-        }
-
-        point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
-        controller->appendToCurrentStroke(point);
-        update();
-    }
+    controller->onMouseMove(event);
+    update();
 }
-
 
 void Canvas::mouseReleaseEvent(QMouseEvent* event)
 {
     if ((Qt::LeftButton == event->button()) && controller->isDrawing()) {
-        controller->setDrawingToFalse();
+        controller->onMouseLift(event);
         if (controller->getCurrentStroke().size() > 1) {
             addStrokeToVertexBuffer(controller->getCurrentStroke());
             updateVertexBuffer();

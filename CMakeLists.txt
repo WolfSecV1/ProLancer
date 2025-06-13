@@ -27,11 +27,15 @@ target_sources(Lancer PRIVATE
     src/Canvas.cpp
     src/core/CanvasController.cpp
     src/fileReader.cpp
- "src/core/CanvasController.h" "data/StrokePoint.h")
+    src/core/CanvasController.h
+    src/data/StrokePoint.h 
+    src/core/BrushUtils.h
+    src/core/BrushUtils.cpp "src/core/StrokeProcessor.h" "src/core/StrokeProcessor.cpp")
 
 target_include_directories(Lancer PRIVATE
     src
     src/core
+    src/data 
 )
 
 target_link_libraries(Lancer 

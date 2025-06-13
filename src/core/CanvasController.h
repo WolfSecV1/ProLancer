@@ -5,17 +5,23 @@
 #include <QColor>
 #include <QVector>
 #include <QTime>
+#include <memory>
 #include "../data/StrokePoint.h"  // your struct for points in a stroke
+
+class StrokeProcessor;
 
 class CanvasController
 {
 public:
+
     CanvasController();
 
     // Call this when mouse press happens
-    void handleMousePress(QMouseEvent* event);
+    void onMousePress(QMouseEvent* event);
+    void onMouseMove(QMouseEvent* event);
+    void onMouseLift(QMouseEvent* event);
 
-    // You can add getters to access stroke data, etc.
+    // Getters + Setters
     const QVector<StrokePoint>& getCurrentStroke() const;
     void clearCurrentStroke();
     void appendToCurrentStroke(StrokePoint& point);
@@ -24,7 +30,13 @@ public:
     QColor getCurrentColor();
     void setCurrentColor(const QColor& color);
 
+    StrokeProcessor& getProcessor() {
+        return *strokeProcessor;  // Dereference the unique_ptr
+    }
+
+
 private:
+    std::unique_ptr<StrokeProcessor> strokeProcessor;
     bool drawing = false;             // Are we currently drawing?
     QVector<StrokePoint> currentStroke;
     QColor currentColor = QColor(0, 0, 0);  // default black
@@ -32,6 +44,7 @@ private:
     // You can add thickness limits here
     float minThickness = 1.0f;
     float maxThickness = 5.0f;
+    float speedSensitivity = 0.75f;
 };
 
 #endif // CANVASCONTROLLER_H

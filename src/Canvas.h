@@ -8,12 +8,7 @@
 #include <QTime>
 #include "../data/StrokePoint.h"
 #include "core/CanvasController.h"
-
-struct Vertex {
-    float x, y;         // position
-    float r, g, b;      // color 
-    float thickness;    // thickness
-};
+#include "data/Vertex.h"
 
 class Canvas : public QOpenGLWidget, protected QOpenGLFunctions  
 {  
@@ -37,13 +32,7 @@ private:
     // Brush Options
     float minThickness = 1.0f;
     float maxThickness = 8.0f;
-    float speedSensitivity = 0.75f;  // How much speed affects thickness
 
-    void convertToOpenGLCoords(const QPointF& qtPoint, float& x, float& y); // Convert Qt to OpenGL coords  
-    QVector<QPointF> interpolatePoints(const QPointF& p1, const QPointF& p2, int n_S = 3);
-    float calculatePressure(const QPointF& posI, const QPointF& posF, qint64 deltaT);
-    void addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke);
-    void updateVertexBuffer();
     void renderVertexBuffer();
     void rebuildVertexBuffer();
     void renderCurrentStroke();
@@ -51,6 +40,8 @@ private:
 public:  
     Canvas(QWidget* parent = nullptr); // Canvas class  
     ~Canvas();
+    void addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke);
+    void updateVertexBuffer();
     void clearCanvas(); // Clear Canvas  
     void undo();
     void setColor(const QColor& color); // Sets pen color 
