@@ -1,7 +1,7 @@
 #pragma comment(lib, "opengl32.lib")
 #include "Canvas.h"
 #include "core/StrokeProcessor.h"
-#include "core/BrushUtils.h"
+#include "core/math/mathUtils.h"
 #include <QShortcut>
 #include <iostream>
 

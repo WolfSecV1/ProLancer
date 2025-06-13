@@ -28,17 +28,19 @@ target_sources(Lancer PRIVATE
     src/core/CanvasController.cpp
     src/fileReader.cpp
     src/core/CanvasController.h
-    src/data/StrokePoint.h 
-    src/core/BrushUtils.h
-    src/core/BrushUtils.cpp 
+    src/data/StrokePoint.h
+    src/core/math/mathUtils.h
+    src/core/math/mathUtils.cpp
     src/core/StrokeProcessor.h 
     src/core/StrokeProcessor.cpp 
     src/rendering/StrokeRenderer.h 
-    src/rendering/StrokeRenderer.cpp)
+    src/rendering/StrokeRenderer.cpp
+    src/core/StrokeManager.h)
 
 target_include_directories(Lancer PRIVATE
     src
     src/core
+    src/core/math
     src/data 
     src/renderer
     src/ui

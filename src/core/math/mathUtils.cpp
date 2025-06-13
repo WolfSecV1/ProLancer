@@ -1,4 +1,4 @@
-#include "BrushUtils.h"
+#include "mathUtils.h"
 
 float calculatePressure(const QPointF& posF, const QPointF& posI, qint64 deltaT, float speedSense) {
     if (deltaT <= 0) {

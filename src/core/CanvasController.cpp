@@ -1,5 +1,5 @@
 #include "CanvasController.h"
-#include "BrushUtils.h"
+#include "math/mathUtils.h"
 #include "StrokeProcessor.h"
 
 CanvasController::CanvasController() {

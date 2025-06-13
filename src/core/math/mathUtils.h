@@ -1,5 +1,5 @@
-#ifndef BRUSHUTILS_H
-#define BRUSHUTILS_H
+#ifndef MATHUTILS_H
+#define MATHUTILS_H
 
 #include <QPoint>
 

@@ -24,7 +24,7 @@ xcopy assets %DEPLOY_DIR%\assets /E /I /Y
 "%QT_BIN%\windeployqt.exe" %DEPLOY_DIR%\%APP_NAME%.exe --release --dir %DEPLOY_DIR%
 
 :: --- ZIP THE FOLDER ---
-powershell -Command "Compress-Archive -Path '%DEPLOY_DIR%\*' -DestinationPath '%APP_NAME%_%VERSION%.zip'"
+powershell -Command "Compress-Archive -Path '%DEPLOY_DIR%\*' -DestinationPath '%APP_NAME%_v%VERSION%.zip'"
 
 echo ✅ Build and packaging complete: %APP_NAME%_%VERSION%.zip
 pause

@@ -1,5 +1,5 @@
 #include "StrokeProcessor.h"
-#include "BrushUtils.h"
+#include "math/mathUtils.h"
 
 StrokeProcessor::StrokeProcessor() {}
 
