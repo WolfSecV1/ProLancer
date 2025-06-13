@@ -17,15 +17,12 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions
 private:
     // Initializing required variables
     CanvasController* controller;
-    QVector<StrokePoint> currentStroke;  // Current stroke
     QVector<QVector<StrokePoint>> strokeList; // List of all strokes
-    bool drawing; // Flag to see if currently drawing  
-    QColor currentColor = Qt::black; // Set Color of ALL points.
     QElapsedTimer timer; // timer
     QVector<int> strokeVertexCounts;
 
     // VBO Stuff
-    QOpenGLBuffer vBuffer; // Create buffer to store data on GPU instead of CPU
+    QOpenGLBuffer vBuffer;
     QVector<Vertex> vertices; // List of Vertex structs, append points to upload to vertexBuffer
     bool vboUpdateFlag; // Check if vertex data has changed
 

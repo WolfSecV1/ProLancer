@@ -30,7 +30,7 @@ target_sources(Lancer PRIVATE
     src/core/CanvasController.h
     src/data/StrokePoint.h 
     src/core/BrushUtils.h
-    src/core/BrushUtils.cpp "src/core/StrokeProcessor.h" "src/core/StrokeProcessor.cpp")
+    src/core/BrushUtils.cpp "src/core/StrokeProcessor.h" "src/core/StrokeProcessor.cpp" "src/core/StrokeRenderer.h" "src/core/StrokeRenderer.cpp")
 
 target_include_directories(Lancer PRIVATE
     src

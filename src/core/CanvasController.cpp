@@ -1,9 +1,11 @@
 #include "CanvasController.h"
 #include "BrushUtils.h"
 #include "StrokeProcessor.h"
+#include "StrokeRenderer.h"
 
 CanvasController::CanvasController() {
     strokeProcessor = std::make_unique<StrokeProcessor>();
+    strokeRenderer = std::make_unique<StrokeRenderer>();
 }
 
 void CanvasController::onMousePress(QMouseEvent* event)
@@ -61,6 +63,10 @@ void CanvasController::onMouseMove(QMouseEvent* event) {
         point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
         currentStroke.append(point);
     }
+}
+
+void CanvasController::initializeRenderer(QOpenGLBuffer* buffer) {
+    strokeRenderer->initialize(buffer);
 }
 
 void CanvasController::onMouseLift(QMouseEvent* event) {

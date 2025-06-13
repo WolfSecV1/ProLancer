@@ -6,7 +6,7 @@
 #include <iostream>
 
 // Canvas implementation TODO: Convert all of this to QOpenGLWindow
-Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), drawing(false), vboUpdateFlag(false)
+Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), vboUpdateFlag(false)
 {
     controller = new CanvasController();
     setMinimumSize(500, 500);
@@ -23,27 +23,23 @@ Canvas::~Canvas()
 
 void Canvas::initializeGL()
 {
-    //Init OpenGL Funcs
+    // Canvas-wide OpenGL setup
     initializeOpenGLFunctions();
-
-    //Make bg white
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-    //Antialiasing
-    glEnable(GL_LINE_SMOOTH); //AntiAliasing
-    glEnable(GL_BLEND); // Enables blending
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); //Blends color with transparency
-
-    // Set Line width
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);  // Background color
+    glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glLineWidth(3.0f);
+
+    // Create Canvas's resources
+    vBuffer.create();
+
+    // Initialize renderer with Canvas resources
+    controller->initializeRenderer(&vBuffer);
 
     if (!vBuffer.isCreated()) {
         vBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         vBuffer.create(); 
-
-        if (!vBuffer.isCreated()) {
-            qWarning() << "Failed to create vertex buffer!";
-        }
     }
 
     std::cout << "OpenGL Online" << std::endl;
@@ -51,6 +47,8 @@ void Canvas::initializeGL()
 
 void Canvas::paintGL()
 {
+    makeCurrent();
+
     // Clear screen
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -73,59 +71,14 @@ void Canvas::paintGL()
 
 }
 void Canvas::renderCurrentStroke() {
-    QVector<Vertex> tempVertices;
+    if (!controller) return;
+
     const auto& stroke = controller->getCurrentStroke();
     const auto& color = controller->getCurrentColor();
 
-    for (int i = 0; i < stroke.size() - 1; ++i) {
-        const StrokePoint& p1 = stroke[i];
-        const StrokePoint& p2 = stroke[i + 1];
-
-        // Simple line segment without over-interpolation
-        QVector<QPointF> points;
-        points.append(p1.pos);
-        points.append(p2.pos);
-
-        for (int j = 0; j < points.size() - 1; ++j) {
-            QPointF currentPos = points[j];
-            QPointF nextPos = points[j + 1];
-
-            // Calculate direction
-            float dx = nextPos.x() - currentPos.x();
-            float dy = nextPos.y() - currentPos.y();
-            float len = std::sqrt(dx * dx + dy * dy);
-
-            if (len < 0.1f) continue; // Skip very short segments
-
-            dx /= len;
-            dy /= len;
-
-            // Use smaller thickness for smoother appearance
-            float thick = std::min<float>(p1.thickness, 3.0f) * 0.5f; // Reduce thickness
-            // Perpendicular offset
-            float perpX = -dy * thick;
-            float perpY = dx * thick;
-
-            float cx, cy;
-            convertToOpenGLCoords(currentPos, cx, cy);
-
-
-            Vertex v1 = { cx + perpX, cy + perpY, color.redF(), color.greenF(), color.blueF(), thick };
-            Vertex v2 = { cx - perpX, cy - perpY, color.redF(), color.greenF(), color.blueF(), thick };
-
-            tempVertices.append(v1);
-            tempVertices.append(v2);
-        }
-    }
-
-    // Render current stroke
-    if (!tempVertices.isEmpty()) {
-        glBegin(GL_TRIANGLE_STRIP);
-        for (const Vertex& v : tempVertices) {
-            glColor4f(v.r, v.g, v.b, 0.8f);
-            glVertex2f(v.x, v.y);
-        }
-        glEnd();
+    if (!stroke.isEmpty()) {
+        auto& renderer = controller->getRenderer();
+        renderer.renderStroke(stroke, color);  // Make sure renderer exists
     }
 }
 
@@ -161,28 +114,8 @@ void Canvas::updateVertexBuffer() {
     vBuffer.release();
 }
 
-void Canvas::renderVertexBuffer()
-{
-    if (vertices.isEmpty() || !vBuffer.bind()) return;
-
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-
-    glVertexPointer(2, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(0));
-    glColorPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(2 * sizeof(float)));
-
-    // Draw each stroke separately
-    int startVertex = 0;
-    for (int count : strokeVertexCounts) {
-        if (count > 0) {
-            glDrawArrays(GL_TRIANGLE_STRIP, startVertex, count);
-            startVertex += count;
-        }
-    }
-
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_VERTEX_ARRAY);
-    vBuffer.release();
+void Canvas::renderVertexBuffer() {
+    controller->getRenderer().renderVertexBuffer(vertices, strokeVertexCounts, vBuffer);
 }
 
 void Canvas::rebuildVertexBuffer() {
