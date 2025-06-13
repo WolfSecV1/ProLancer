@@ -1,7 +1,7 @@
 // PaintWindow.cpp
 #include "MainWindow.h"
 #include "Canvas.h"
-#include "fileReader.h"
+#include "../fileReader.h"
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QPushButton>

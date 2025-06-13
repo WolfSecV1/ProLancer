@@ -23,19 +23,25 @@ add_executable(Lancer)
 
 target_sources(Lancer PRIVATE
     src/main.cpp
-    src/MainWindow.cpp
-    src/Canvas.cpp
+    src/ui/MainWindow.cpp
+    src/ui/Canvas.cpp
     src/core/CanvasController.cpp
     src/fileReader.cpp
     src/core/CanvasController.h
     src/data/StrokePoint.h 
     src/core/BrushUtils.h
-    src/core/BrushUtils.cpp "src/core/StrokeProcessor.h" "src/core/StrokeProcessor.cpp" "src/core/StrokeRenderer.h" "src/core/StrokeRenderer.cpp")
+    src/core/BrushUtils.cpp 
+    src/core/StrokeProcessor.h 
+    src/core/StrokeProcessor.cpp 
+    src/rendering/StrokeRenderer.h 
+    src/rendering/StrokeRenderer.cpp)
 
 target_include_directories(Lancer PRIVATE
     src
     src/core
     src/data 
+    src/renderer
+    src/ui
 )
 
 target_link_libraries(Lancer 

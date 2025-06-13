@@ -2,7 +2,7 @@
 #include <qopenglfunctions.h>  
 #include <iostream>  
 #include "../data/Vertex.h"  
-#include "BrushUtils.h"  
+#include "../core/BrushUtils.h"  
 
 StrokeRenderer::StrokeRenderer() : vBuffer(nullptr) {}  
 

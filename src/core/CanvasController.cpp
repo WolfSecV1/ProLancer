@@ -1,7 +1,6 @@
 #include "CanvasController.h"
 #include "BrushUtils.h"
 #include "StrokeProcessor.h"
-#include "StrokeRenderer.h"
 
 CanvasController::CanvasController() {
     strokeProcessor = std::make_unique<StrokeProcessor>();

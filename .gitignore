@@ -1,4 +1,5 @@
 # === Build artifacts ===
+/deploy/
 /build/
 /out/
 /bin/

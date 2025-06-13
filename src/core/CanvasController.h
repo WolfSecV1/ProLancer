@@ -8,7 +8,7 @@
 #include <memory>
 #include <qopenglbuffer.h>
 #include "../data/StrokePoint.h"  // your struct for points in a stroke
-#include "StrokeRenderer.h"
+#include "../rendering/StrokeRenderer.h"
 
 class StrokeProcessor;
 
