@@ -55,7 +55,7 @@ void StrokeRenderer::renderStroke(const QVector<StrokePoint>& stroke, const QCol
         }  
     }  
 
-    // Render current stroke  
+    // Render
     if (!tempVertices.isEmpty()) {  
         glBegin(GL_TRIANGLE_STRIP);  
         for (const Vertex& v : tempVertices) {  

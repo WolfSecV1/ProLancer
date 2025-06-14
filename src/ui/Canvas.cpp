@@ -5,10 +5,9 @@
 #include <QShortcut>
 #include <iostream>
 
-// Canvas implementation TODO: Convert all of this to QOpenGLWindow
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), vboUpdateFlag(false)
 {
-    controller = new CanvasController();
+    controller = std::make_unique<CanvasController>();
     setMinimumSize(500, 500);
     QShortcut* u = new QShortcut(QKeySequence::Undo, this);
     connect(u, &QShortcut::activated, this, &Canvas::undo);
@@ -98,9 +97,8 @@ void Canvas::resizeGL(int width, int height) {
 // Fixed addStrokeToVertexBuffer
 void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 {
-    auto newVertices = controller->getProcessor().generateVertices(stroke);
-    vertices.append(newVertices);
-    strokeVertexCounts.append(newVertices.size());
+    controller->getManager().addStroke(stroke, controller->getProcessor(), vertices);
+    update();
 }
 
 void Canvas::updateVertexBuffer() {
@@ -108,21 +106,21 @@ void Canvas::updateVertexBuffer() {
 }
 
 void Canvas::renderVertexBuffer() {
-    controller->getRenderer().renderVertexBuffer(vertices, strokeVertexCounts, vBuffer);
+    controller->getRenderer().renderVertexBuffer(vertices, controller->getManager().getStrokeVertexCounts(), vBuffer);
 }
 
 void Canvas::rebuildVertexBuffer() {
     vertices.clear();
-    for (const QVector<StrokePoint>& stroke : strokeList) {
+    for (const QVector<StrokePoint>& stroke : controller->getManager().getStrokes()) {
         addStrokeToVertexBuffer(stroke);
     }
 }
 
 void Canvas::clearCanvas() {
     controller->clearCurrentStroke();
-    strokeList.clear();
+    controller->getManager().clear();
     vertices.clear();
-    strokeVertexCounts.clear();
+    controller->getManager().getStrokeVertexCounts().clear();
 
     // Clear the VBO
     controller->getRenderer().clearBuffer(vBuffer);
@@ -130,31 +128,14 @@ void Canvas::clearCanvas() {
     update();
 }
 
-void Canvas::undo() {  
-    if (controller->getCurrentStroke().isEmpty() && !strokeList.isEmpty()) {
-
-        strokeList.pop_back();
-        
-        vertices.clear();
-        strokeVertexCounts.clear();
-
-        for (const QVector<StrokePoint>& stroke : strokeList) {
-            addStrokeToVertexBuffer(stroke); // This appends to vertices and strokeVertexCounts
-        }
-
-        updateVertexBuffer();
-
-        update();  
-    }  
-}
-
 void Canvas::setColor(const QColor& color) {
     controller->setCurrentColor(color);
 }
 
-void Canvas::setBrushOptions(float minT, float maxT, float s) {
-    minThickness = minT;
-    maxThickness = maxT;
+void Canvas::undo() {
+    controller->getManager().undo(controller->getProcessor(), vertices);
+    updateVertexBuffer();
+    update();
 }
 
 void Canvas::mousePressEvent(QMouseEvent* event)
@@ -178,7 +159,6 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
         if (controller->getCurrentStroke().size() > 1) {
             addStrokeToVertexBuffer(controller->getCurrentStroke());
             updateVertexBuffer();
-            strokeList.append(controller->getCurrentStroke());
         }
         controller->clearCurrentStroke();
         update();

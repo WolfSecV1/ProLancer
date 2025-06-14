@@ -16,19 +16,13 @@ class Canvas : public QOpenGLWidget, protected QOpenGLFunctions
 
 private:
     // Initializing required variables
-    CanvasController* controller;
-    QVector<QVector<StrokePoint>> strokeList; // List of all strokes
+    std::unique_ptr<CanvasController> controller;
     QElapsedTimer timer; // timer
-    QVector<int> strokeVertexCounts;
 
     // VBO Stuff
     QOpenGLBuffer vBuffer;
     QVector<Vertex> vertices; // List of Vertex structs, append points to upload to vertexBuffer
     bool vboUpdateFlag; // Check if vertex data has changed
-
-    // Brush Options
-    float minThickness = 1.0f;
-    float maxThickness = 8.0f;
 
     void renderVertexBuffer();
     void rebuildVertexBuffer();

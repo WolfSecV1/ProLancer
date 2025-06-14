@@ -35,7 +35,7 @@ target_sources(Lancer PRIVATE
     src/core/StrokeProcessor.cpp 
     src/rendering/StrokeRenderer.h 
     src/rendering/StrokeRenderer.cpp
-    src/core/StrokeManager.h)
+    src/core/StrokeManager.h "src/core/StrokeManager.cpp")
 
 target_include_directories(Lancer PRIVATE
     src

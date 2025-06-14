@@ -1,10 +1,10 @@
 #include "CanvasController.h"
 #include "math/mathUtils.h"
-#include "StrokeProcessor.h"
 
 CanvasController::CanvasController() {
     strokeProcessor = std::make_unique<StrokeProcessor>();
     strokeRenderer = std::make_unique<StrokeRenderer>();
+    strokeManager = std::make_unique<StrokeManager>();
 }
 
 void CanvasController::onMousePress(QMouseEvent* event)
@@ -69,7 +69,7 @@ void CanvasController::initializeRenderer(QOpenGLBuffer* buffer) {
 }
 
 void CanvasController::onMouseLift(QMouseEvent* event) {
-    setDrawingToFalse();
+        setDrawingToFalse();
 }
 
 const QVector<StrokePoint>& CanvasController::getCurrentStroke() const {

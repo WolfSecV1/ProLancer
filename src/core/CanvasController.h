@@ -9,8 +9,8 @@
 #include <qopenglbuffer.h>
 #include "../data/StrokePoint.h"  // your struct for points in a stroke
 #include "../rendering/StrokeRenderer.h"
-
-class StrokeProcessor;
+#include "StrokeProcessor.h"
+#include "StrokeManager.h"
 
 class CanvasController
 {
@@ -42,10 +42,15 @@ public:
         return *strokeRenderer;  // Dereference the unique_ptr
     }
 
+    StrokeManager& getManager() {
+        return *strokeManager;  // Dereference the unique_ptr
+    }
+
 private:
 
     std::unique_ptr<StrokeProcessor> strokeProcessor;
     std::unique_ptr<StrokeRenderer> strokeRenderer;
+    std::unique_ptr<StrokeManager> strokeManager;
 
     bool drawing = false;             // Are we currently drawing?
 
