@@ -89,3 +89,21 @@ void StrokeRenderer::renderVertexBuffer(const QVector<Vertex>& vertices, const Q
     glDisableClientState(GL_VERTEX_ARRAY);
     buffer.release();
 }
+
+void StrokeRenderer::updateVertexBuffer(QOpenGLBuffer& buffer, const QVector<Vertex>& vertices) {
+    if (!buffer.bind()) return;
+    if (vertices.isEmpty()) {
+        buffer.allocate(nullptr, 0);
+    }
+    else {
+        buffer.allocate(vertices.data(), vertices.size() * sizeof(Vertex));
+    }
+    buffer.release();
+}
+
+void StrokeRenderer::clearBuffer(QOpenGLBuffer& buffer) {
+    if (buffer.bind()) {
+        buffer.allocate(nullptr, 0);
+        buffer.release();
+    }
+}

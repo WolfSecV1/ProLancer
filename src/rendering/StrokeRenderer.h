@@ -17,8 +17,9 @@ public:
     void initialize(QOpenGLBuffer* vertexBuffer);
     void renderStroke(const QVector<StrokePoint>& stroke, const QColor& color);
     void renderVertexBuffer(const QVector<Vertex>& vertices, const QVector<int>& strokeCounts, QOpenGLBuffer& buffer);
-    //void updateVertexBuffer(QOpenGLBuffer& buffer, const QVector<Vertex>& vertices);
-    //void clearBuffer(QOpenGLBuffer& buffer);
+    void updateVertexBuffer(QOpenGLBuffer& buffer, const QVector<Vertex>& vertices);
+    void clearBuffer(QOpenGLBuffer& buffer);
+
 private:
     QOpenGLBuffer* vBuffer;
 };

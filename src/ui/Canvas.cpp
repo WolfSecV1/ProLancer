@@ -104,14 +104,7 @@ void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 }
 
 void Canvas::updateVertexBuffer() {
-    if (!vBuffer.bind()) return;
-    if (vertices.isEmpty()) {
-        vBuffer.allocate(nullptr, 0);
-    }
-    else {
-        vBuffer.allocate(vertices.data(), vertices.size() * sizeof(Vertex));
-    }
-    vBuffer.release();
+    controller->getRenderer().updateVertexBuffer(vBuffer, vertices);
 }
 
 void Canvas::renderVertexBuffer() {
@@ -132,10 +125,7 @@ void Canvas::clearCanvas() {
     strokeVertexCounts.clear();
 
     // Clear the VBO
-    if (vBuffer.bind()) {
-        vBuffer.allocate(nullptr, 0);
-        vBuffer.release();
-    }
+    controller->getRenderer().clearBuffer(vBuffer);
 
     update();
 }
