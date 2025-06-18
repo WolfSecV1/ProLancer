@@ -25,7 +25,7 @@ void StrokeManager::undo(StrokeProcessor& processor, QVector<Vertex>& vertices) 
     // Generate vertices WITHOUT calling addStroke (to avoid recursion)
     for (const QVector<StrokePoint>& stroke : strokes) {
         auto newVertices = processor.generateVertices(stroke);
-        vertices.append(newVertices);
+        vertices += newVertices;  // Or use operator+=
         strokeVertexCounts.append(newVertices.size());
     }
 }
@@ -47,4 +47,8 @@ void StrokeManager::appendToStrokes(const QVector<StrokePoint>& stroke)
 
 void StrokeManager::clear() {
     strokes.clear();
+}
+
+void StrokeManager::clearStrokeVertexCounts() {
+    strokeVertexCounts.clear();
 }

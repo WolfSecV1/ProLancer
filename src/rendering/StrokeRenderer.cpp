@@ -47,11 +47,17 @@ void StrokeRenderer::renderStroke(const QVector<StrokePoint>& stroke, const QCol
             cx = currentPos.x();
             cy = currentPos.y();
 
-            Vertex v1 = { cx + perpX, cy + perpY, color.redF(), color.greenF(), color.blueF(), thick };  
-            Vertex v2 = { cx - perpX, cy - perpY, color.redF(), color.greenF(), color.blueF(), thick };  
+            Vertex v1 = { cx + perpX, cy + perpY, color.redF(), color.greenF(), color.blueF(), thick };
+            Vertex v2 = { cx - perpX, cy - perpY, color.redF(), color.greenF(), color.blueF(), thick };
 
-            tempVertices.append(v1);  
-            tempVertices.append(v2);  
+            if (len < 0.1f || !std::isfinite(cx) || !std::isfinite(cy)) continue;
+
+            // And validate the final vertices:
+            if (std::isfinite(v1.x) && std::isfinite(v1.y) &&
+                std::isfinite(v2.x) && std::isfinite(v2.y)) {
+                tempVertices.append(v1);
+                tempVertices.append(v2);
+            }
         }  
     }  
 
@@ -68,7 +74,9 @@ void StrokeRenderer::renderStroke(const QVector<StrokePoint>& stroke, const QCol
 
 void StrokeRenderer::renderVertexBuffer(const QVector<Vertex>& vertices, const QVector<int>& strokeCounts, QOpenGLBuffer& buffer)
 {
-    if (vertices.isEmpty() || !buffer.bind()) return;
+    if (vertices.isEmpty() || !buffer.bind()) {
+        return;
+    }
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -76,9 +84,9 @@ void StrokeRenderer::renderVertexBuffer(const QVector<Vertex>& vertices, const Q
     glVertexPointer(2, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(0));
     glColorPointer(3, GL_FLOAT, sizeof(Vertex), reinterpret_cast<void*>(2 * sizeof(float)));
 
-    // Draw each stroke separately
     int startVertex = 0;
-    for (int count : strokeCounts) {
+    for (int i = 0; i < strokeCounts.size(); ++i) {
+        int count = strokeCounts[i];
         if (count > 0) {
             glDrawArrays(GL_TRIANGLE_STRIP, startVertex, count);
             startVertex += count;

@@ -6,7 +6,7 @@ set APP_NAME=Lancer
 set BUILD_DIR=out\build\release
 set DEPLOY_DIR=deploy
 set VERSION_FILE=assets\version.txt
-set QT_BIN=C:\Qt\6.9.1\msvc2022_64\bin
+set QT_BIN=C:\Qt2\6.9.1\mingw_64\bin
 
 :: --- READ VERSION ---
 set /p VERSION=<%VERSION_FILE%
@@ -26,5 +26,5 @@ xcopy assets %DEPLOY_DIR%\assets /E /I /Y
 :: --- ZIP THE FOLDER ---
 powershell -Command "Compress-Archive -Path '%DEPLOY_DIR%\*' -DestinationPath '%APP_NAME%_v%VERSION%.zip'"
 
-echo ✅ Build and packaging complete: %APP_NAME%_%VERSION%.zip
+echo Build and packaging complete: %APP_NAME%_%VERSION%.zip
 pause

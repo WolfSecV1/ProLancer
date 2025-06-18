@@ -5,7 +5,6 @@ StrokeProcessor::StrokeProcessor() {}
 
 QVector<QPointF> StrokeProcessor::interpolatePoints(const QPointF& p1, const QPointF& p2, int segments) {
     QVector<QPointF> result; //Create empty stroke
-    result.append(p1); //start with first point
     for (int i = 0; i <= segments; ++i) { //loop for # of segments
         float t = static_cast<float>(i) / segments; // t = i/n
 
@@ -16,9 +15,9 @@ QVector<QPointF> StrokeProcessor::interpolatePoints(const QPointF& p1, const QPo
         );
         result.append(interpolated); //Append it
     }
-    result.append(p2); // Last but not lease attach the last point
     return result; //Return the stroke
 }
+
 
 QVector<Vertex> StrokeProcessor::generateVertices(const QVector<StrokePoint>& stroke) {
 

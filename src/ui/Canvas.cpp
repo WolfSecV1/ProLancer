@@ -1,9 +1,8 @@
 #pragma comment(lib, "opengl32.lib")
 #include "Canvas.h"
-#include "core/StrokeProcessor.h"
-#include "core/math/mathUtils.h"
 #include <QShortcut>
 #include <iostream>
+#include <algorithm>
 
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), vboUpdateFlag(false)
 {
@@ -40,8 +39,6 @@ void Canvas::initializeGL()
         vBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         vBuffer.create(); 
     }
-
-    std::cout << "OpenGL Online" << std::endl;
 }
 
 void Canvas::paintGL()
@@ -91,13 +88,24 @@ void Canvas::resizeGL(int width, int height) {
     glMatrixMode(GL_MODELVIEW); // Matrix Ops affect model-voew matrix
     glLoadIdentity(); // Resert Current Matrix
 
-    std::cout << "Resize GL: " << width << "x" << height << std::endl;
 }
 
 // Fixed addStrokeToVertexBuffer
 void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 {
+    int oldSize = vertices.size();
     controller->getManager().addStroke(stroke, controller->getProcessor(), vertices);
+
+    if (vertices.size() > oldSize) {
+        for (int i = oldSize; i < vertices.size(); ++i) {
+            const Vertex& v = vertices[i];
+            if (!std::isfinite(v.x) || !std::isfinite(v.y) ||
+                std::abs(v.x) > 10000 || std::abs(v.y) > 10000) {
+                std::cout << "INVALID VERTEX [" << i << "]: x=" << v.x << ", y=" << v.y << std::endl;
+            }
+        }
+    }
+
     update();
 }
 
@@ -120,7 +128,10 @@ void Canvas::clearCanvas() {
     controller->clearCurrentStroke();
     controller->getManager().clear();
     vertices.clear();
-    controller->getManager().getStrokeVertexCounts().clear();
+    controller->getManager().clearStrokeVertexCounts();
+
+    makeCurrent();
+    glClear(GL_COLOR_BUFFER_BIT);
 
     // Clear the VBO
     controller->getRenderer().clearBuffer(vBuffer);
@@ -157,8 +168,39 @@ void Canvas::mouseReleaseEvent(QMouseEvent* event)
     if ((Qt::LeftButton == event->button()) && controller->isDrawing()) {
         controller->onMouseLift(event);
         if (controller->getCurrentStroke().size() > 1) {
+            const auto& currentStroke = controller->getCurrentStroke();
+
+            int maxPoints = (currentStroke.size() > 3) ? 3 : currentStroke.size();
+            for (int i = 0; i < maxPoints; ++i) {
+                const auto& pt = currentStroke[i];
+            }
+
+
+            // Check if any vertices are invalid
+            for (int i = vertices.size() - 10; i < vertices.size(); ++i) {
+                if (i >= 0) {
+                    const auto& v = vertices[i];
+                    if (!std::isfinite(v.x) || !std::isfinite(v.y) ||
+                        std::abs(v.x) > 5000 || std::abs(v.y) > 5000) {
+                        std::cout << "PROBLEMATIC VERTEX [" << i << "]: x=" << v.x << ", y=" << v.y << std::endl;
+                    }
+                }
+            }
+
             addStrokeToVertexBuffer(controller->getCurrentStroke());
-            updateVertexBuffer();
+
+            // Check if any vertices are invalid
+            for (int i = vertices.size() - 10; i < vertices.size(); ++i) {
+                if (i >= 0) {
+                    const auto& v = vertices[i];
+                    if (!std::isfinite(v.x) || !std::isfinite(v.y) ||
+                        std::abs(v.x) > 5000 || std::abs(v.y) > 5000) {
+                        std::cout << "PROBLEMATIC VERTEX [" << i << "]: x=" << v.x << ", y=" << v.y << std::endl;
+                    }
+                }
+            }
+
+            vboUpdateFlag=true;
         }
         controller->clearCurrentStroke();
         update();

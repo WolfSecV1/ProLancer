@@ -9,6 +9,8 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
+find_package(OpenGL REQUIRED)
+
 find_package(Qt6 
     REQUIRED 
     COMPONENTS 
@@ -35,7 +37,12 @@ target_sources(Lancer PRIVATE
     src/core/StrokeProcessor.cpp 
     src/rendering/StrokeRenderer.h 
     src/rendering/StrokeRenderer.cpp
-    src/core/StrokeManager.h "src/core/StrokeManager.cpp")
+    src/core/StrokeManager.h
+    src/core/StrokeManager.cpp
+    src/ui/tools/HSVColorPicker.h
+    src/ui/tools/HSVColorPicker.cpp
+    resources.qrc
+)
 
 target_include_directories(Lancer PRIVATE
     src
@@ -52,6 +59,11 @@ target_link_libraries(Lancer
     Qt6::Widgets 
     Qt6::OpenGL 
     Qt6::OpenGLWidgets
+    OpenGL::GL
+)
+
+qt_add_resources(MyApp "resources"
+    FILES resources.qrc
 )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE ON)

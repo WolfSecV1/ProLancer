@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/">
+        <file>assets/version.txt</file>
+    </qresource>
+</RCC>

@@ -15,6 +15,7 @@ public:
     void addStroke(const QVector<StrokePoint>& stroke, StrokeProcessor& processor, QVector<Vertex>& vertices);
     void undo(StrokeProcessor& processor, QVector<Vertex>& vertices);
     void clear();
+    void clearStrokeVertexCounts();
     const QVector<QVector<StrokePoint>>& getStrokes() const;
     QVector<int> getStrokeVertexCounts();
     void appendToStrokes(const QVector<StrokePoint>& stroke);
