@@ -6,7 +6,7 @@
 <p align="center">
   <img src="assets/preview.png" alt="App Screenshot" width="700"/>
   
-  NOTE: THIS IMAGE WAS NOT DRAWN BY ME AND WAS PROVIDED TO THE DEVELOPER UNDER FAIR USE.
+  **NOTE: THE ABOVE IMAGE WAS NOT DRAWN BY ME AND WAS PROVIDED TO THE DEVELOPER UNDER FAIR USE.**
 </p>
 
 ---
