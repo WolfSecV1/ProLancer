@@ -35,6 +35,7 @@ public:
     void updateVertexBuffer();
     void clearCanvas(); // Clear Canvas  
     void undo();
+    void redo();
     void setColor(const QColor& color); // Sets pen color 
     void setBrushOptions(float min, float max, float s);
 

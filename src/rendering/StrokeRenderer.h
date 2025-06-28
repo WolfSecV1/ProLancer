@@ -3,7 +3,6 @@
 
 #include <qopenglfunctions.h> // Add this include to ensure QOpenGLFunctions is available
 #include <qopenglbuffer.h>
-#include "../data/StrokePoint.h"
 #include "../data/Vertex.h"
 #include <QVector>
 #include <QColor>
@@ -15,7 +14,6 @@ public:
     StrokeRenderer();
 
     void initialize(QOpenGLBuffer* vertexBuffer);
-    void renderStroke(const QVector<StrokePoint>& stroke, const QColor& color);
     void renderVertexBuffer(const QVector<Vertex>& vertices, const QVector<int>& strokeCounts, QOpenGLBuffer& buffer);
     void updateVertexBuffer(QOpenGLBuffer& buffer, const QVector<Vertex>& vertices);
     void clearBuffer(QOpenGLBuffer& buffer);

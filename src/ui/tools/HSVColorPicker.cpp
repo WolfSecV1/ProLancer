@@ -44,6 +44,11 @@ void HSVColorPicker::calculateTriangleVertcies() {
 void HSVColorPicker::paintEvent(QPaintEvent* event)
 {
     QPainter painter(this);
+    if (!painter.isActive()) {
+        qDebug() << "Painter not active, skipping paintEvent";
+        return;
+    }
+
     painter.setRenderHint(QPainter::Antialiasing);
 
     drawColorWheel(painter);

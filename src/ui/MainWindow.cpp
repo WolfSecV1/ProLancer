@@ -8,9 +8,29 @@
 #include <QColorDialog>
 #include <iostream>
 #include <QLabel>
+#include <QTimer>
 
 MainWindow::MainWindow(QWidget* parent) : QMainWindow(parent)
 {
+#ifdef QT_DEBUG
+    QTimer* watchdog = new QTimer(this);
+    connect(watchdog, &QTimer::timeout, this, []() {
+        qDebug() << "[MainWindow Watchdog] App is responsive at" << QTime::currentTime().toString();
+    });
+    watchdog->start(2000); // every 2 seconds
+#endif
+
+    connect(qApp, &QGuiApplication::applicationStateChanged, this, [this](Qt::ApplicationState state){
+        if(state == Qt::ApplicationInactive || state == Qt::ApplicationSuspended){
+            // You might disable updates or just prevent repaint requests
+            this->colorPicker->setUpdatesEnabled(false);
+        } else {
+            this->colorPicker->setUpdatesEnabled(true);
+            this->colorPicker->update();
+        }
+    });
+
+
     QString lancerVersion = loadVersion();
     setWindowTitle("Lancer: v" + lancerVersion);
     setMinimumSize(800, 800);
@@ -76,9 +96,11 @@ void MainWindow::setupUI()
 
     QPushButton* clearButton = new QPushButton("Clear Canvas");
     QPushButton* undoButton = new QPushButton("Undo");
+    QPushButton* redoButton = new QPushButton("Redo");
 
     toolLayout->addWidget(clearButton);
     toolLayout->addWidget(undoButton);
+    toolLayout->addWidget(redoButton);
     toolLayout->addStretch(); // Push buttons to left
 
     // Create canvas
@@ -111,6 +133,9 @@ void MainWindow::setupUI()
 
     connect(undoButton, &QPushButton::clicked, [this]() {
         canvas->undo();
+    });
+    connect(redoButton, &QPushButton::clicked, [this]() {
+        canvas->redo();
     });
 }
 
@@ -184,7 +209,7 @@ void MainWindow::setupLeftSidebar()
     // Add color tab to tab widget
     sidebarTabs->addTab(colorTab, "Colors");
 
-    // You can add more tabs here in the future
+    // You can add more tabs here in the future TODO
     // sidebarTabs->addTab(brushTab, "Brushes");
     // sidebarTabs->addTab(layersTab, "Layers");
 

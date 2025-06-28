@@ -21,7 +21,7 @@ find_package(Qt6
     OpenGLWidgets
 )
 
-add_executable(Lancer)
+add_executable(Lancer WIN32)
 
 target_sources(Lancer PRIVATE
     src/main.cpp
@@ -66,4 +66,6 @@ qt_add_resources(MyApp "resources"
     FILES resources.qrc
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES WIN32_EXECUTABLE ON)
+if (WIN32)
+    set(CMAKE_WIN32_EXECUTABLE ON)
+endif()

@@ -2,15 +2,16 @@
 #include "Canvas.h"
 #include <QShortcut>
 #include <iostream>
-#include <algorithm>
+#include <QTimer>
 
 Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), vboUpdateFlag(false)
 {
     controller = std::make_unique<CanvasController>();
     setMinimumSize(500, 500);
     QShortcut* u = new QShortcut(QKeySequence::Undo, this);
+    QShortcut* r = new QShortcut(QKeySequence::Redo, this);
     connect(u, &QShortcut::activated, this, &Canvas::undo);
-
+    connect(r, &QShortcut::activated, this, &Canvas::redo);
 }
 
 Canvas::~Canvas()
@@ -23,6 +24,13 @@ void Canvas::initializeGL()
 {
     // Canvas-wide OpenGL setup
     initializeOpenGLFunctions();
+
+    QString glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
+    QString glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
+#ifdef QT_DEBUG
+    qDebug() << "OpenGL Version:" << glVersion;
+    qDebug() << "OpenGL Renderer:" << glRenderer;
+#endif
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);  // Background color
     glEnable(GL_LINE_SMOOTH);
     glEnable(GL_BLEND);
@@ -43,40 +51,99 @@ void Canvas::initializeGL()
 
 void Canvas::paintGL()
 {
-    makeCurrent();
-
-    // Clear screen
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // Check VBO
-    if (vboUpdateFlag) {
-        updateVertexBuffer();
-        vboUpdateFlag = false;
+    if (!context() || !context()->isValid()) {
+        qWarning() << "Invalid OpenGL context!";
+        return;
     }
 
-    // Render all strokes from buffer
-    if (!vertices.isEmpty()) {
-        renderVertexBuffer();
-    }
+    static bool renderBroken = false;
+    if (renderBroken) return;
 
-    // Render current stroke being drawn (immediate mode)
-    const auto& stroke = controller->getCurrentStroke();
-    if (!stroke.isEmpty() && stroke.size() > 1) {
-        renderCurrentStroke();
-    }
+    try {
+        makeCurrent();
 
+#ifdef QT_DEBUG
+        qDebug() << "paintGL() starting...";
+#endif
+
+        // Clear screen
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // Update VBO if needed
+        if (vboUpdateFlag) {
+            updateVertexBuffer();
+            vboUpdateFlag = false;
+        }
+
+        // Render buffered strokes
+        if (!vertices.isEmpty()) {
+            renderVertexBuffer();
+        }
+
+        // Render live stroke
+        const auto& stroke = controller->getCurrentStroke();
+        if (!stroke.isEmpty() && stroke.size() > 1) {
+            renderCurrentStroke();
+        }
+
+#ifdef QT_DEBUG
+        GLenum err;
+        while ((err = glGetError()) != GL_NO_ERROR) {
+            qDebug() << "GL Error:" << err;
+        }
+        qDebug() << "paintGL() finished";
+#endif
+
+    } catch (const std::exception& e) {
+        renderBroken = true;
+#ifdef QT_DEBUG
+        qDebug() << "paintGL() exception:" << e.what();
+#endif
+    } catch (...) {
+        renderBroken = true;
+#ifdef QT_DEBUG
+        qDebug() << "paintGL() unknown exception!";
+#endif
+    }
 }
+
+
 void Canvas::renderCurrentStroke() {
     if (!controller) return;
 
     const auto& stroke = controller->getCurrentStroke();
-    const auto& color = controller->getCurrentColor();
+    if (stroke.isEmpty() || stroke.size() < 2) return;
 
-    if (!stroke.isEmpty()) {
-        auto& renderer = controller->getRenderer();
-        renderer.renderStroke(stroke, color);  // Make sure renderer exists
+    auto& renderer = controller->getRenderer();
+    auto& processor = controller->getProcessor();
+
+    QVector<StrokePoint> coloredStroke = stroke;
+    QColor color = controller->getCurrentColor();
+
+    for (auto& pt : coloredStroke) {
+        pt.r = color.redF();
+        pt.g = color.greenF();
+        pt.b = color.blueF();
+    }
+
+    QVector<Vertex> verts = processor.generateVertices(coloredStroke);
+
+    if (!verts.isEmpty()) {
+        // Use a separate temporary buffer for the current stroke
+        static QOpenGLBuffer tempBuffer(QOpenGLBuffer::VertexBuffer);
+        if (!tempBuffer.isCreated()) {
+            tempBuffer.create();
+        }
+
+        if (tempBuffer.bind()) {
+            tempBuffer.allocate(verts.constData(), verts.size() * sizeof(Vertex));
+            QVector<int> oneCount = { static_cast<int>(verts.size()) };
+            renderer.renderVertexBuffer(verts, oneCount, tempBuffer);
+            tempBuffer.release();
+        }
     }
 }
+
 
 void Canvas::resizeGL(int width, int height) {
     glViewport(0, 0, width, height); // Set viewport
@@ -110,6 +177,10 @@ void Canvas::addStrokeToVertexBuffer(const QVector<StrokePoint>& stroke)
 }
 
 void Canvas::updateVertexBuffer() {
+    if (!vBuffer.isCreated()) {
+        qWarning() << "VBuffer not created!";
+        return;
+    }
     controller->getRenderer().updateVertexBuffer(vBuffer, vertices);
 }
 
@@ -149,8 +220,16 @@ void Canvas::undo() {
     update();
 }
 
+void Canvas::redo() {
+    controller->getManager().redo(controller->getProcessor(), vertices);
+    updateVertexBuffer();
+    update();
+}
+
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
+    controller->getManager().setChangeSinceLastUndo(true);
+    controller->getManager().clearRedoStack();
     controller->onMousePress(event);
     timer.restart();
     update();
