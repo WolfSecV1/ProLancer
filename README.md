@@ -40,4 +40,4 @@ make
 ./Lancer
 ```
 
-Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build.)
+Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build. You also may need to manually specify your Qt installation path as mine is different.)
