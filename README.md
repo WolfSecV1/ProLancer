@@ -3,6 +3,12 @@
   <img src="assets/screenshot.png" alt="App Screenshot" width="700"/>
 </p>
 
+<p align="center">
+  <img src="assets/preview.png" alt="App Screenshot" width="700"/>
+  
+  **NOTE: THE ABOVE IMAGE WAS NOT DRAWN BY ME AND WAS PROVIDED TO THE DEVELOPER UNDER FAIR USE.**
+</p>
+
 ---
 
 # 🎨 Lancer
@@ -19,7 +25,7 @@ A soon to be modern, OpenGL-powered canvas — built for freelancers, real-time 
 - Real OpenGL performance
 - Custom brush pipeline
 - VBO-backed rendering for stability and speed
-- Newly implemented undo button
+- Newly implemented undo, redo buttons
 
 ---
 
@@ -34,4 +40,4 @@ make
 ./Lancer
 ```
 
-Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build.)
+Or simply run the batchfile if you are running windows. (Qt 6.9.1 is required to build. You also may need to manually specify your Qt installation path as mine is different.)
