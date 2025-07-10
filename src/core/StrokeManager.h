@@ -5,13 +5,10 @@
 #include "../data/Vertex.h"
 #include "StrokeProcessor.h"
 
-// TODO:
 
 class StrokeManager {
 public:
-
     StrokeManager();
-
     void addStroke(const QVector<StrokePoint>& stroke, StrokeProcessor& processor, QVector<Vertex>& vertices);
     void undo(StrokeProcessor& processor, QVector<Vertex>& vertices);
     void redo(StrokeProcessor& processor, QVector<Vertex>& vertices);

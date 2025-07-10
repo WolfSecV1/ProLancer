@@ -20,6 +20,7 @@ public:
 
     // Call this when mouse press happens
     void onMousePress(QMouseEvent* event);
+    bool tabletEvent(QTabletEvent* event);
     void onMouseMove(QMouseEvent* event);
     void onMouseLift(QMouseEvent* event);
 

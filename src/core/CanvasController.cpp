@@ -1,5 +1,6 @@
 #include "CanvasController.h"
-#include "math/mathUtils.h"
+#include "mathUtils.h"
+
 
 CanvasController::CanvasController() {
     strokeProcessor = std::make_unique<StrokeProcessor>();
@@ -63,6 +64,47 @@ void CanvasController::onMouseMove(QMouseEvent* event) {
         currentStroke.append(point);
     }
 }
+
+bool CanvasController::tabletEvent(QTabletEvent* event)
+{
+    const auto* device = event->pointingDevice();
+    if (!device || device->type() != QInputDevice::DeviceType::Stylus)
+        return false;
+
+    if (!drawing || event->pressure() <= 0.01f)
+        return false;
+
+    if (event->type() != QEvent::TabletMove)
+        return false;
+
+    QPointF newPos = event->position();
+
+    if (!currentStroke.isEmpty()) {
+        QPointF lastPos = currentStroke.last().pos;
+        float dx = newPos.x() - lastPos.x();
+        float dy = newPos.y() - lastPos.y();
+        float distance = std::sqrt(dx * dx + dy * dy);
+        if (distance < 1.5f) return false;
+    }
+
+    // Add point
+    StrokePoint point;
+    point.pos = newPos;
+    point.strokeTime = QTime::currentTime();
+
+    const auto& color = currentColor;
+    point.r = color.redF();
+    point.g = color.greenF();
+    point.b = color.blueF();
+
+    point.pressure = std::max(static_cast<float>(event->pressure()), 0.01f);
+    point.thickness = minThickness + (maxThickness - minThickness) * point.pressure;
+
+    currentStroke.append(point);
+    event->accept();
+    return true; // Drawing occurred
+}
+
 
 void CanvasController::initializeRenderer(QOpenGLBuffer* buffer) {
     strokeRenderer->initialize(buffer);

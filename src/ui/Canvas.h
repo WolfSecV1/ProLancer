@@ -40,10 +40,11 @@ public:
     void setBrushOptions(float min, float max, float s);
 
 protected:  
-    void initializeGL() override;  
-    void paintGL() override;  
-    void resizeGL(int width, int height) override;  
+    void initializeGL() override;
+    void paintGL() override;
+    void resizeGL(int width, int height) override;
 
+    void tabletEvent(QTabletEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;  
     void mouseMoveEvent(QMouseEvent* event) override;  
     void mouseReleaseEvent(QMouseEvent* event) override;  

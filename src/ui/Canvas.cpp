@@ -12,6 +12,9 @@ Canvas::Canvas(QWidget* parent) : QOpenGLWidget(parent), vboUpdateFlag(false)
     QShortcut* r = new QShortcut(QKeySequence::Redo, this);
     connect(u, &QShortcut::activated, this, &Canvas::undo);
     connect(r, &QShortcut::activated, this, &Canvas::redo);
+    setAttribute(Qt::WA_TabletTracking);
+    setMouseTracking(true);
+
 }
 
 Canvas::~Canvas()
@@ -25,9 +28,9 @@ void Canvas::initializeGL()
     // Canvas-wide OpenGL setup
     initializeOpenGLFunctions();
 
+#ifdef QT_DEBUG
     QString glVersion = reinterpret_cast<const char*>(glGetString(GL_VERSION));
     QString glRenderer = reinterpret_cast<const char*>(glGetString(GL_RENDERER));
-#ifdef QT_DEBUG
     qDebug() << "OpenGL Version:" << glVersion;
     qDebug() << "OpenGL Renderer:" << glRenderer;
 #endif
@@ -46,6 +49,11 @@ void Canvas::initializeGL()
     if (!vBuffer.isCreated()) {
         vBuffer = QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
         vBuffer.create(); 
+    }
+
+    GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
+        qWarning() << "Initial framebuffer incomplete! Status:" << status;
     }
 }
 
@@ -228,11 +236,28 @@ void Canvas::redo() {
 
 void Canvas::mousePressEvent(QMouseEvent* event)
 {
+#ifdef QT_DEBUG
+    qDebug() << "Mouse Pressed";
+#endif
     controller->getManager().setChangeSinceLastUndo(true);
     controller->getManager().clearRedoStack();
     controller->onMousePress(event);
     timer.restart();
     update();
+}
+
+void Canvas::tabletEvent(QTabletEvent* event)
+{
+#ifdef QT_DEBUG
+    qDebug() << "tabletEvent ON";
+#endif
+
+    if (controller->tabletEvent(event)) {
+        controller->getManager().setChangeSinceLastUndo(true);
+        controller->getManager().clearRedoStack();
+        timer.restart();
+        update();
+    }
 }
 
 
